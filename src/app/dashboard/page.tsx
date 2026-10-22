@@ -196,9 +196,11 @@ export default function DashboardPage() {
       {/* Dashboard Top Header */}
       <header className="h-16 px-4 sm:px-8 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-extrabold text-white text-base shadow-lg shadow-purple-600/30">
-            T
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Tap-Maker"
+            className="w-9 h-9 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover"
+          />
           <div>
             <span className="font-extrabold text-base tracking-tight text-white">
               Tap-Maker Studio

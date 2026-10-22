@@ -55,9 +55,11 @@ export default function HomePage() {
       {/* Navigation Bar */}
       <nav className="h-20 px-6 sm:px-12 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-purple-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-purple-600/30">
-            T
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Tap-Maker"
+            className="w-10 h-10 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover"
+          />
           <div>
             <span className="font-extrabold text-lg tracking-tight text-white">Tap-Maker</span>
             <span className="text-[10px] uppercase font-bold text-purple-400 tracking-wider block -mt-1">

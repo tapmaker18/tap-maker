@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   title: "Tap-Maker — Smart Digital Profile & Menu Studio",
   description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profiles and smart restaurant menus.",
   icons: {
-    icon: "/aura-logo.svg",
-    apple: "/aura-logo.svg",
+    icon: "/logo.svg",
+    apple: "/logo.svg",
   },
   openGraph: {
     title: "Tap-Maker — Smart Digital Profile & Menu Studio",
     description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profiles and smart menus.",
-    images: ["/aura-logo.svg"],
+    images: ["/logo.svg"],
     type: "website",
   },
 };

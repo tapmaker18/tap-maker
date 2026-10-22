@@ -116,9 +116,11 @@ function LoginForm() {
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <Link href="/" className="flex items-center gap-2 mb-3 group">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-extrabold text-white text-xl shadow-lg shadow-purple-600/30 group-hover:scale-105 transition-transform">
-              T
-            </div>
+            <img
+              src="/logo.svg"
+              alt="Tap-Maker"
+              className="w-11 h-11 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover group-hover:scale-105 transition-transform"
+            />
             <span className="font-extrabold tracking-tight text-white text-lg">
               Tap-Maker<span className="text-purple-400">.</span>
             </span>
