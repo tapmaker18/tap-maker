@@ -3,6 +3,8 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Lock, Mail, Key, ArrowRight, ShieldCheck, UserPlus, LogIn, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
@@ -31,6 +33,7 @@ function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -105,8 +108,35 @@ function LoginForm() {
         setGoogleLoading(false);
         return;
       }
-      setError(err.message || "Google sign-in failed. Please try again.");
+      if (err.code === "auth/unauthorized-domain") {
+        setError("This domain is not yet authorized in Firebase Console > Authentication > Settings > Authorized Domains.");
+      } else {
+        setError(err.message || "Google sign-in failed. Please try again.");
+      }
       setGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please type your email address above first, then click 'Forgot password?'.");
+      return;
+    }
+    setResetLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      if (!auth) throw new Error("Firebase Auth is not initialized");
+      await sendPasswordResetEmail(auth, email.trim());
+      setSuccessMsg(`Password reset link sent to ${email.trim()}! Please check your inbox/spam folder.`);
+    } catch (err: any) {
+      if (err.code === "auth/unauthorized-domain") {
+        setError("Please add this domain to Firebase Console > Authentication > Settings > Authorized Domains.");
+      } else {
+        setError(err.message || "Failed to send password reset email.");
+      }
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -245,6 +275,18 @@ function LoginForm() {
                 className="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
               />
             </div>
+            {mode === "signin" && (
+              <div className="flex justify-end mt-1.5">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                >
+                  {resetLoading ? "Sending reset link..." : "Forgot password?"}
+                </button>
+              </div>
+            )}
           </div>
 
           {mode === "signup" && (
