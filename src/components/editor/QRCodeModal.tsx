@@ -19,7 +19,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ profile, isOpen, onClo
 
   const publicUrl = typeof window !== "undefined"
     ? `${window.location.origin}/${profile.slug}`
-    : `https://tmaker.com/${profile.slug}`;
+    : `https://tap-maker.com/${profile.slug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);
@@ -57,7 +57,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ profile, isOpen, onClo
             <QrCode className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">NFC Link & QR Code</h3>
+            <h3 className="text-lg font-bold text-white">Share Link &amp; QR Code</h3>
             <p className="text-xs text-slate-400">{profile.name} • /{profile.slug}</p>
           </div>
         </div>
@@ -117,17 +117,17 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({ profile, isOpen, onClo
           </button>
         </div>
 
-        {/* NFC Card Writing Instruction Card */}
+        {/* Card Writing Instruction Card */}
         <div className="mt-5 p-3.5 rounded-2xl bg-purple-950/40 border border-purple-500/20 text-xs text-purple-200">
           <div className="flex items-center gap-2 font-bold text-purple-300 mb-1">
             <Smartphone className="w-4 h-4" />
-            <span>How to write to your NFC Card:</span>
+            <span>How to write this link to your card:</span>
           </div>
           <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300 opacity-90 pl-1">
-            <li>Download the free <strong>NFC Tools</strong> app (iOS/Android).</li>
+            <li>Download a free <strong>card writer</strong> app (iOS/Android).</li>
             <li>Tap <strong>Write</strong> &rarr; <strong>Add a record</strong> &rarr; <strong>URL / URI</strong>.</li>
             <li>Paste the URL: <code className="text-purple-300 bg-purple-900/50 px-1 py-0.5 rounded font-mono">{publicUrl}</code></li>
-            <li>Tap <strong>Write</strong> and hold your physical NFC card to the back of your phone!</li>
+            <li>Tap <strong>Write</strong> and hold your physical card to the back of your phone!</li>
           </ol>
         </div>
       </div>

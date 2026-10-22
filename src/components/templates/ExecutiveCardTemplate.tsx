@@ -19,9 +19,10 @@ import {
 interface TemplateProps {
   profile: Profile;
   isPreview?: boolean;
+  onLinkClick?: (linkId: string, linkTitle: string) => void;
 }
 
-export const ExecutiveCardTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false }) => {
+export const ExecutiveCardTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false, onLinkClick }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const { themeSettings, layoutSettings, contactInfo, links } = profile;
   const activeLinks = links.filter((l) => l.isActive);
@@ -37,7 +38,7 @@ export const ExecutiveCardTemplate: React.FC<TemplateProps> = ({ profile, isPrev
 VERSION:3.0
 N:${profile.name};;;;
 FN:${profile.name}
-ORG:${contactInfo.company || profile.subtitle || "TMaker Digital"}
+ORG:${contactInfo.company || profile.subtitle || "Tap-Maker Digital"}
 TITLE:${profile.subtitle || ""}
 TEL;TYPE=CELL:${contactInfo.phone || ""}
 EMAIL:${contactInfo.email || ""}
@@ -158,7 +159,12 @@ END:VCARD`;
           {/* Direct Quick Action Buttons (Save Contact, Call, Email) */}
           <div className="grid grid-cols-2 gap-2.5 mt-5">
             <button
-              onClick={downloadVCard}
+              onClick={() => {
+                downloadVCard();
+                if (!isPreview && onLinkClick) {
+                  onLinkClick("vcard-save", "Save Contact (vCard)");
+                }
+              }}
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs shadow-md transition-all duration-200 hover:opacity-90 active:scale-95"
               style={{
                 backgroundColor: themeSettings.accentColor,
@@ -172,6 +178,11 @@ END:VCARD`;
             {contactInfo.phone ? (
               <a
                 href={isPreview ? undefined : `tel:${contactInfo.phone}`}
+                onClick={() => {
+                  if (!isPreview && onLinkClick) {
+                    onLinkClick("phone-call", "Call Directly");
+                  }
+                }}
                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs border transition-all duration-200 hover:bg-white/10 active:scale-95"
                 style={{
                   borderColor: themeSettings.borderColor,
@@ -184,6 +195,11 @@ END:VCARD`;
             ) : (
               <a
                 href={isPreview ? undefined : `mailto:${contactInfo.email}`}
+                onClick={() => {
+                  if (!isPreview && onLinkClick) {
+                    onLinkClick("email-click", "Send Email");
+                  }
+                }}
                 className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-semibold text-xs border transition-all duration-200 hover:bg-white/10 active:scale-95"
                 style={{
                   borderColor: themeSettings.borderColor,
@@ -261,7 +277,16 @@ END:VCARD`;
             <a
               key={link.id}
               href={link.url === "#vcard" ? undefined : isPreview ? undefined : link.url}
-              onClick={link.url === "#vcard" ? downloadVCard : undefined}
+              onClick={() => {
+                if (link.url === "#vcard") {
+                  downloadVCard();
+                  if (!isPreview && onLinkClick) {
+                    onLinkClick(link.id, link.title);
+                  }
+                } else if (!isPreview && onLinkClick) {
+                  onLinkClick(link.id, link.title);
+                }
+              }}
               target={isPreview || link.url === "#vcard" ? "_self" : "_blank"}
               rel="noopener noreferrer"
               className="flex items-center justify-between p-3 rounded-2xl border transition-all duration-200 hover:translate-y-[-1px] hover:shadow-lg"
@@ -303,7 +328,7 @@ END:VCARD`;
               className="text-xs opacity-50"
               style={{ color: themeSettings.textSecondaryColor }}
             >
-              {layoutSettings.footerText || "Official NFC Digital Business Pass"}
+              {layoutSettings.footerText || "Official Digital Business Pass"}
             </p>
           </footer>
         )}

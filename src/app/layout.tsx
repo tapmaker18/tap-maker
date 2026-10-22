@@ -2,16 +2,16 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://tmaker.com"),
-  title: "TMaker — NFC Digital Profile Template Maker",
-  description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profile pages linked to physical NFC business cards.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://tap-maker.com"),
+  title: "Tap-Maker — Smart Digital Profile & Menu Studio",
+  description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profiles and smart restaurant menus.",
   icons: {
     icon: "/aura-logo.svg",
     apple: "/aura-logo.svg",
   },
   openGraph: {
-    title: "TMaker — NFC Digital Profile Studio",
-    description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profile pages.",
+    title: "Tap-Maker — Smart Digital Profile & Menu Studio",
+    description: "One Tap. Your Entire Digital Presence. Create, brand, and publish responsive digital profiles and smart menus.",
     images: ["/aura-logo.svg"],
     type: "website",
   },

@@ -9,16 +9,17 @@ import { ExecutiveCardTemplate } from "./ExecutiveCardTemplate";
 interface ProfileRendererProps {
   profile: Profile;
   isPreview?: boolean;
+  onLinkClick?: (linkId: string, linkTitle: string) => void;
 }
 
-export const ProfileRenderer: React.FC<ProfileRendererProps> = ({ profile, isPreview = false }) => {
+export const ProfileRenderer: React.FC<ProfileRendererProps> = ({ profile, isPreview = false, onLinkClick }) => {
   switch (profile.templateId) {
     case "modern-bio":
-      return <ModernBioTemplate profile={profile} isPreview={isPreview} />;
+      return <ModernBioTemplate profile={profile} isPreview={isPreview} onLinkClick={onLinkClick} />;
     case "executive-card":
-      return <ExecutiveCardTemplate profile={profile} isPreview={isPreview} />;
+      return <ExecutiveCardTemplate profile={profile} isPreview={isPreview} onLinkClick={onLinkClick} />;
     case "cyber-glow":
     default:
-      return <CyberGlowTemplate profile={profile} isPreview={isPreview} />;
+      return <CyberGlowTemplate profile={profile} isPreview={isPreview} onLinkClick={onLinkClick} />;
   }
 };

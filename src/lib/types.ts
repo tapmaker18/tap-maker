@@ -126,3 +126,65 @@ export interface Profile {
   publishedAt?: string;
   userId?: string;
 }
+
+// ============================================================
+// Menu System Types (Digital Restaurant/Café Menu)
+// ============================================================
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  image?: string;
+  isAvailable: boolean;
+  isFeatured: boolean;
+  tags?: string[];
+  sortOrder: number;
+}
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  icon?: string;
+  items: MenuItem[];
+  isVisible: boolean;
+  sortOrder: number;
+}
+
+export interface MenuThemeSettings {
+  accentColor: string;
+  bgColor: string;
+  textColor: string;
+  cardStyle: "clean" | "glass" | "bordered";
+  fontFamily: string;
+  showPrices: boolean;
+  currency: string;
+  layout: "grid" | "list";
+}
+
+export interface MenuContactInfo {
+  phone?: string;
+  address?: string;
+  openingHours?: string;
+  instagram?: string;
+  facebook?: string;
+  website?: string;
+}
+
+export interface Menu {
+  id: string;
+  slug: string;
+  businessName: string;
+  tagline?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  categories: MenuCategory[];
+  themeSettings: MenuThemeSettings;
+  contactInfo: MenuContactInfo;
+  status: "draft" | "published";
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}

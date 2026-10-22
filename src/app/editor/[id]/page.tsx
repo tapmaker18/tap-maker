@@ -69,7 +69,7 @@ export default function EditorPage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">Loading TMaker Studio...</span>
+          <span className="text-sm font-medium">Loading Tap-Maker Studio...</span>
         </div>
       </div>
     );
@@ -156,7 +156,7 @@ export default function EditorPage() {
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-mono">
-              tmaker.com/{profile.slug}
+              tap-maker.com/{profile.slug}
             </p>
           </div>
         </div>
@@ -187,10 +187,10 @@ export default function EditorPage() {
           <button
             onClick={() => setQrModalOpen(true)}
             className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors"
-            title="NFC Link & QR Code"
+            title="Share Link & QR Code"
           >
             <QrCode className="w-4 h-4 text-purple-400" />
-            <span className="hidden sm:inline">QR & NFC</span>
+            <span className="hidden sm:inline">QR Code</span>
           </button>
 
           {/* Direct Public Link Button */}
@@ -385,7 +385,7 @@ export default function EditorPage() {
         </section>
       </div>
 
-      {/* QR Code & NFC Tool Modal */}
+      {/* QR Code & Share Modal */}
       <QRCodeModal
         profile={profile}
         isOpen={qrModalOpen}

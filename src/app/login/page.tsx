@@ -120,7 +120,7 @@ function LoginForm() {
               T
             </div>
             <span className="font-extrabold tracking-tight text-white text-lg">
-              TMaker<span className="text-purple-400">.</span>
+              Tap-Maker<span className="text-purple-400">.</span>
             </span>
           </Link>
 
@@ -135,8 +135,8 @@ function LoginForm() {
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-xs">
             {mode === "signin"
-              ? "Access your dashboard to customize NFC profile templates, manage client links, and edit brand themes."
-              : "Register your account to unlock the two-panel live reactive profile builder and dynamic NFC cards."}
+              ? "Access your dashboard to customize digital profile templates, manage client links, and edit brand themes."
+              : "Register your account to unlock the two-panel live reactive profile builder and smart interactive links."}
           </p>
         </div>
 

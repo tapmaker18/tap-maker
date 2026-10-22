@@ -39,7 +39,7 @@ export const LetterAvatar: React.FC<LetterAvatarProps> = ({
         src={avatarUrl}
         alt={name}
         onError={() => setImageError(true)}
-        className={`${className} ${shapeClass} object-cover shadow-xl border-2 border-slate-900 bg-slate-950`}
+        className={`${className} ${shapeClass} object-cover shadow-xl border-2 border-slate-900 bg-slate-950 relative z-10`}
       />
     );
   }
@@ -61,7 +61,7 @@ export const LetterAvatar: React.FC<LetterAvatarProps> = ({
   // Otherwise, render a clean letter avatar with brand gradient
   return (
     <div
-      className={`${className} ${shapeClass} flex items-center justify-center font-extrabold text-white shadow-xl border-2 border-slate-900 select-none flex-shrink-0`}
+      className={`${className} ${shapeClass} flex items-center justify-center font-extrabold text-white shadow-xl border-2 border-slate-900 select-none flex-shrink-0 relative z-10`}
       style={{
         background: `linear-gradient(135deg, ${accentColor}, ${secondaryAccent})`,
       }}

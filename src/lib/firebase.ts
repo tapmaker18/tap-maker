@@ -5,13 +5,13 @@ import { getStorage, FirebaseStorage } from "firebase/storage";
 import { getAnalytics, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCQzgSiwO45t3YyfdcDa_abqWgE1r75CwU",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "booking-system-b8aef.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "booking-system-b8aef",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "booking-system-b8aef.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "947519402664",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:947519402664:web:ef89525f3f5880cf1bc89d",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-S7GF4W0TMS",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBqsC_KbEOJcVIga13EHzC0jvDtKYBGN8I",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "tap-maker-67818.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "tap-maker-67818",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "tap-maker-67818.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "756161542588",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:756161542588:web:c0112a3631973bc118d3b9",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
 };
 
 export const isFirebaseConfigured = Boolean(

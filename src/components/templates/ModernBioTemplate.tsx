@@ -10,9 +10,10 @@ import { ChevronRight, CheckCircle, ExternalLink } from "lucide-react";
 interface TemplateProps {
   profile: Profile;
   isPreview?: boolean;
+  onLinkClick?: (linkId: string, linkTitle: string) => void;
 }
 
-export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false }) => {
+export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false, onLinkClick }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const { themeSettings, layoutSettings, links } = profile;
   const activeLinks = links.filter((l) => l.isActive);
@@ -57,17 +58,19 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
             }}
           >
             <div
-              className={`absolute -inset-1 ${getAvatarRadius()} opacity-50 blur-sm`}
+              className={`absolute -inset-1 ${getAvatarRadius()} opacity-50 blur-sm z-0 pointer-events-none`}
               style={{ backgroundColor: color1 }}
             />
-            <LetterAvatar
-              name={profile.name}
-              avatarUrl={profile.avatarUrl}
-              shapeClass={getAvatarRadius()}
-              className="w-24 h-24"
-              accentColor={color1}
-              secondaryAccent={color2}
-            />
+            <div className="relative z-10">
+              <LetterAvatar
+                name={profile.name}
+                avatarUrl={profile.avatarUrl}
+                shapeClass={getAvatarRadius()}
+                className="w-24 h-24"
+                accentColor={color1}
+                secondaryAccent={color2}
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 mt-1">
@@ -104,6 +107,11 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
               target={isPreview ? "_self" : "_blank"}
               rel="noopener noreferrer"
               className={`group flex items-center justify-between p-3.5 border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] ${getButtonRadius()}`}
+              onClick={() => {
+                if (!isPreview && onLinkClick) {
+                  onLinkClick(link.id, link.title);
+                }
+              }}
               style={{
                 backgroundColor: themeSettings.cardBg,
                 borderColor: link.isHighlighted
@@ -136,7 +144,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
 
       {layoutSettings.showFooterBranding && (
         <footer className="text-xs opacity-50 pb-4 text-center">
-          {layoutSettings.footerText || "Created with TMaker"}
+          {layoutSettings.footerText || "Created with Tap-Maker"}
         </footer>
       )}
 

@@ -74,14 +74,14 @@ export default function NewProfilePage() {
             showSubtitlePill: true,
             showVerificationBadge: true,
             showFooterBranding: true,
-            footerText: "Powered by TMaker • NFC Smart Profile",
+            footerText: "Powered by Tap-Maker • Smart Digital Profile",
             sectionSpacing: "normal",
           },
           contactInfo: {
             email: user?.email || "contact@brand.com",
             phone: "",
             location: "Manila, Philippines",
-            website: "https://tmaker.com",
+            website: "https://tap-maker.com",
           },
           sections: [
             { id: `sec-${timestamp}-1`, title: "Featured Links", sectionKey: "featured", isVisible: true, sortOrder: 0 },
@@ -91,7 +91,7 @@ export default function NewProfilePage() {
             {
               id: `link-${timestamp}-1`,
               title: "Official Website",
-              url: "https://tmaker.com",
+              url: "https://tap-maker.com",
               platform: "website",
               category: "featured",
               badge: "FEATURED",
@@ -149,7 +149,7 @@ export default function NewProfilePage() {
           </div>
           <h2 className="text-xl font-bold text-white">Sign Up or Sign In to create your profile</h2>
           <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-            Kailangan mag-sign in o mag-sign up muna bago makapag-create at makapag-customize ng iyong official NFC digital profile template.
+            Kailangan mag-sign in o mag-sign up muna bago makapag-create at makapag-customize ng iyong official digital profile template.
           </p>
           <Link
             href="/login?redirect=/editor/new"

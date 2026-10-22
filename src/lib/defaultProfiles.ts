@@ -37,7 +37,7 @@ export const DEFAULT_PROFILES: Profile[] = [
       showSubtitlePill: true,
       showVerificationBadge: true,
       showFooterBranding: true,
-      footerText: "Powered by TMaker • Official Profile",
+      footerText: "Powered by Tap-Maker • Official Profile",
       sectionSpacing: "normal",
     },
     contactInfo: {
@@ -176,7 +176,7 @@ export const DEFAULT_PROFILES: Profile[] = [
       showSubtitlePill: false,
       showVerificationBadge: true,
       showFooterBranding: true,
-      footerText: "Nexus Solutions • NFC Executive Pass",
+      footerText: "Nexus Solutions • Executive Smart Pass",
       sectionSpacing: "normal",
     },
     contactInfo: {
@@ -276,7 +276,7 @@ export const DEFAULT_PROFILES: Profile[] = [
       showSubtitlePill: true,
       showVerificationBadge: true,
       showFooterBranding: true,
-      footerText: "Crafted by Acme Studio with TMaker",
+      footerText: "Crafted by Acme Studio with Tap-Maker",
       sectionSpacing: "spacious",
     },
     contactInfo: {

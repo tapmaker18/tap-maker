@@ -66,11 +66,11 @@ export const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ profile, onC
 
         <div>
           <label className="block text-xs font-semibold text-slate-300 mb-1">
-            NFC URL Slug *
+            Profile URL Slug *
           </label>
           <div className="flex items-center rounded-xl bg-slate-950 border border-slate-700 overflow-hidden focus-within:border-purple-500">
             <span className="px-3 text-xs text-slate-500 font-mono select-none">
-              tmaker.com/
+              tap-maker.com/
             </span>
             <input
               type="text"
@@ -83,7 +83,7 @@ export const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ profile, onC
             />
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
-            This will be written to the NFC chip and printed on the QR code.
+            This will be your live public link and encoded into your QR code.
           </p>
         </div>
       </div>

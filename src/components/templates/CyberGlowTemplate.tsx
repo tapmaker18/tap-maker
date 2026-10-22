@@ -10,9 +10,10 @@ import { ChevronRight, CheckCircle2 } from "lucide-react";
 interface TemplateProps {
   profile: Profile;
   isPreview?: boolean;
+  onLinkClick?: (linkId: string, linkTitle: string) => void;
 }
 
-export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false }) => {
+export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview = false, onLinkClick }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +81,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
     >
       {/* Dynamic Ambient Radial Glow Background */}
       {themeSettings.enableGlow && (
-        <div className="fixed inset-0 pointer-events-none z-0 filter blur-[40px] opacity-70">
+        <div className="absolute inset-0 pointer-events-none z-0 filter blur-[40px] opacity-70 overflow-hidden">
           <div
             className="absolute w-[500px] h-[500px] -top-24 left-1/2 -translate-x-1/2 rounded-full"
             style={{
@@ -116,7 +117,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
       {/* Subtle Mesh Grid */}
       {themeSettings.enableMeshTexture && (
         <div
-          className="fixed inset-0 pointer-events-none z-0 opacity-25"
+          className="absolute inset-0 pointer-events-none z-0 opacity-25"
           style={{
             backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px)`,
             backgroundSize: "32px 32px",
@@ -138,22 +139,25 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
               }
             }}
           >
+            {/* Glowing Aura Halo (kept strictly behind the avatar with z-0) */}
             <div
-              className={`absolute -inset-1.5 ${getAvatarRadius()} animate-gradient-shift ${
+              className={`absolute -inset-1.5 ${getAvatarRadius()} animate-gradient-shift z-0 pointer-events-none ${
                 themeSettings.enableGlow ? "animate-ring-pulse opacity-85" : "opacity-40"
               }`}
               style={{
                 background: `linear-gradient(135deg, ${brandGradient})`,
               }}
             />
-            <LetterAvatar
-              name={profile.name}
-              avatarUrl={profile.avatarUrl}
-              shapeClass={getAvatarRadius()}
-              className="w-28 h-28"
-              accentColor={color1}
-              secondaryAccent={color2}
-            />
+            <div className="relative z-10">
+              <LetterAvatar
+                name={profile.name}
+                avatarUrl={profile.avatarUrl}
+                shapeClass={getAvatarRadius()}
+                className="w-28 h-28"
+                accentColor={color1}
+                secondaryAccent={color2}
+              />
+            </div>
           </div>
 
           {/* Business / Artist Name */}
@@ -232,7 +236,12 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                         href={isPreview ? undefined : link.url}
                         target={isPreview ? "_self" : "_blank"}
                         rel="noopener noreferrer"
-                        onClick={handleRipple}
+                        onClick={(e) => {
+                          handleRipple(e);
+                          if (!isPreview && onLinkClick) {
+                            onLinkClick(link.id, link.title);
+                          }
+                        }}
                         className={`ripple-container relative group flex items-center justify-between p-3.5 border transition-all duration-300 ${getButtonRadius()} ${
                           isHighlighted
                             ? "shadow-lg shadow-purple-500/10 hover:shadow-purple-500/25 scale-[1.01]"
@@ -309,7 +318,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
               className="text-xs font-medium tracking-wide opacity-60 hover:opacity-100 transition-opacity"
               style={{ color: themeSettings.textSecondaryColor }}
             >
-              {layoutSettings.footerText || "Powered by TMaker • NFC Smart Profile"}
+              {layoutSettings.footerText || "Powered by Tap-Maker • Smart Digital Profile"}
             </p>
           </footer>
         )}

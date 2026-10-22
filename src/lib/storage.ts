@@ -13,7 +13,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-const STORAGE_KEY = "tmaker_profiles_v6";
+const STORAGE_KEY = "tapmaker_profiles_v6";
 
 // Reserved URLs that can never be claimed as a profile slug
 export const RESERVED_SLUGS = [
@@ -32,6 +32,7 @@ export const RESERVED_SLUGS = [
   "privacy",
   "pricing",
   "about",
+  "menu",
 ];
 
 // In-memory cache for server-side or fallback rendering
@@ -43,11 +44,11 @@ function getLocalProfiles(): Profile[] {
   }
   try {
     // Purge older caches
-    localStorage.removeItem("tmaker_profiles_v1");
-    localStorage.removeItem("tmaker_profiles_v2");
-    localStorage.removeItem("tmaker_profiles_v3");
-    localStorage.removeItem("tmaker_profiles_v4");
-    localStorage.removeItem("tmaker_profiles_v5");
+    localStorage.removeItem("tapmaker_profiles_v1");
+    localStorage.removeItem("tapmaker_profiles_v2");
+    localStorage.removeItem("tapmaker_profiles_v3");
+    localStorage.removeItem("tapmaker_profiles_v4");
+    localStorage.removeItem("tapmaker_profiles_v5");
 
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
