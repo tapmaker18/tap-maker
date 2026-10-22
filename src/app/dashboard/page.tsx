@@ -73,38 +73,66 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  const loadProfiles = async () => {
-    if (!user) return;
-    setLoading(true);
-    const list = await getProfiles(user.uid, isAdmin);
-    setProfiles(list);
-
-    // Load analytics for all profiles
+  const loadAnalytics = async (profileList: Profile[]) => {
+    if (!profileList.length) return;
     setAnalyticsLoading(true);
     try {
-      const profileIds = list.map((p) => p.id);
+      const profileIds = profileList.map((p) => p.id);
       const analyticsData = await getAllAnalyticsSummaries(profileIds);
       setAnalytics(analyticsData);
     } catch (err) {
       console.warn("Error loading analytics:", err);
+    } finally {
+      setAnalyticsLoading(false);
     }
-    setAnalyticsLoading(false);
+  };
 
-    setLoading(false);
+  const loadProfiles = async () => {
+    if (!user) return;
+    try {
+      const list = await getProfiles(user.uid, isAdmin);
+      setProfiles(list);
+      loadAnalytics(list);
+    } catch (err) {
+      console.warn("Error loading profiles:", err);
+    }
   };
 
   const loadMenus = async () => {
     if (!user) return;
-    const list = await getMenus(user.uid, isAdmin);
-    setMenus(list);
+    try {
+      const list = await getMenus(user.uid, isAdmin);
+      setMenus(list);
+    } catch (err) {
+      console.warn("Error loading menus:", err);
+    }
+  };
+
+  // Fast initial load: runs profiles and menus concurrently, unblocks UI immediately
+  const loadDashboardData = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const [profileList, menuList] = await Promise.all([
+        getProfiles(user.uid, isAdmin),
+        getMenus(user.uid, isAdmin),
+      ]);
+      setProfiles(profileList);
+      setMenus(menuList);
+      // Background analytics fetch (non-blocking)
+      loadAnalytics(profileList);
+    } catch (err) {
+      console.warn("Error loading dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (user) {
-      loadProfiles();
-      loadMenus();
+      loadDashboardData();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleDuplicate = async (id: string) => {
     const dup = await duplicateProfile(id, user?.uid);

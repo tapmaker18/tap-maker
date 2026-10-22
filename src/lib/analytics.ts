@@ -219,29 +219,32 @@ export async function getAnalyticsSummary(profileId: string): Promise<AnalyticsS
 export async function getAllAnalyticsSummaries(
   profileIds: string[]
 ): Promise<Record<string, AnalyticsSummary>> {
+  // 1. Immediately pre-populate with local analytics for instant zero-latency UI rendering
+  const local = getLocalAnalytics();
   const results: Record<string, AnalyticsSummary> = {};
+  for (const pid of profileIds) {
+    results[pid] = local[pid] || { ...EMPTY_SUMMARY };
+  }
 
-  if (isFirebaseConfigured && db) {
+  // 2. Refresh from Firestore in background if configured, with 2s timeout protection
+  if (isFirebaseConfigured && db && profileIds.length > 0) {
     const firestore = db;
     try {
       const promises = profileIds.map(async (pid) => {
         const summaryRef = doc(firestore, "profiles", pid, "analytics", "summary");
-        const snap = await getDoc(summaryRef);
-        if (snap.exists()) {
+        const snap = await Promise.race([
+          getDoc(summaryRef),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Analytics getDoc timeout")), 2000)
+          ),
+        ]);
+        if (snap && snap.exists()) {
           results[pid] = snap.data() as AnalyticsSummary;
         }
       });
-      await Promise.all(promises);
+      await Promise.allSettled(promises);
     } catch (err) {
       console.warn("Firestore getAllAnalyticsSummaries note:", err);
-    }
-  }
-
-  // Merge with localStorage for any profiles missing from Firestore
-  const local = getLocalAnalytics();
-  for (const pid of profileIds) {
-    if (!results[pid]) {
-      results[pid] = local[pid] || { ...EMPTY_SUMMARY };
     }
   }
 

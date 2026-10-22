@@ -86,17 +86,26 @@ function saveLocalProfiles(profiles: Profile[]): void {
 export async function getProfiles(userId?: string, isAdmin?: boolean): Promise<Profile[]> {
   if (isFirebaseConfigured && db) {
     try {
-      let snap;
+      let snapPromise;
       if (isAdmin) {
         // Super admin sees everything
-        snap = await getDocs(collection(db, "profiles"));
+        snapPromise = getDocs(collection(db, "profiles"));
       } else if (userId) {
         // Regular user sees only their own profiles
         const q = query(collection(db, "profiles"), where("userId", "==", userId));
-        snap = await getDocs(q);
+        snapPromise = getDocs(q);
       } else {
-        snap = await getDocs(collection(db, "profiles"));
+        snapPromise = getDocs(collection(db, "profiles"));
       }
+
+      // Add a 2.5s timeout so unconfigured/disabled Firestore APIs do not hang the dashboard
+      const snap = await Promise.race([
+        snapPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Firestore getProfiles timeout")), 2500)
+        ),
+      ]);
+
       const list: Profile[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Profile));
       return list;

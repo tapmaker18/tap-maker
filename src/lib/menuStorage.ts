@@ -103,15 +103,24 @@ function saveLocalMenus(menus: Menu[]): void {
 export async function getMenus(userId?: string, isAdmin?: boolean): Promise<Menu[]> {
   if (isFirebaseConfigured && db) {
     try {
-      let snap;
+      let snapPromise;
       if (isAdmin) {
-        snap = await getDocs(collection(db, "menus"));
+        snapPromise = getDocs(collection(db, "menus"));
       } else if (userId) {
         const q = query(collection(db, "menus"), where("userId", "==", userId));
-        snap = await getDocs(q);
+        snapPromise = getDocs(q);
       } else {
-        snap = await getDocs(collection(db, "menus"));
+        snapPromise = getDocs(collection(db, "menus"));
       }
+
+      // Add a 2.5s timeout so unconfigured/disabled Firestore APIs do not hang the dashboard
+      const snap = await Promise.race([
+        snapPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Firestore getMenus timeout")), 2500)
+        ),
+      ]);
+
       const list: Menu[] = [];
       snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Menu));
       return list;
