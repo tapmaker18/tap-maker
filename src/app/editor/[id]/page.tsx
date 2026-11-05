@@ -42,27 +42,36 @@ export default function EditorPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
 
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, isAdmin, isPending, isSuspended } = useAuth();
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       router.push(`/login?redirect=/editor/${profileId}`);
+      return;
     }
-  }, [user, authLoading, profileId, router]);
+    if (isPending || isSuspended) {
+      router.push("/dashboard");
+      return;
+    }
+  }, [user, authLoading, isPending, isSuspended, profileId, router]);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user || isPending || isSuspended) return;
     async function load() {
       const data = await getProfileById(profileId);
       if (data) {
+        if (data.userId && data.userId !== user?.uid && !isAdmin) {
+          router.push("/dashboard");
+          return;
+        }
         setProfile(data);
       } else {
         router.push("/dashboard");
       }
     }
     load();
-  }, [profileId, user, authLoading, router]);
+  }, [profileId, user, authLoading, router, isAdmin, isPending, isSuspended]);
 
   if (authLoading || !profile) {
     return (

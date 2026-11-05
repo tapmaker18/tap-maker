@@ -5,32 +5,39 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Lock, Mail, Key, ArrowRight, ShieldCheck, UserPlus, LogIn, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  Lock,
+  Mail,
+  Key,
+  ShieldCheck,
+  UserPlus,
+  LogIn,
+  AlertCircle,
+  CheckCircle2,
+  Building2,
+  Phone,
+  Tag,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
-
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
-  );
-}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/dashboard";
 
-  const { user, signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Customer onboarding metadata fields (captured during Sign Up)
+  const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [orderRef, setOrderRef] = useState("");
+
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
@@ -48,10 +55,17 @@ function LoginForm() {
     setError(null);
     setSuccessMsg(null);
 
-    if (mode === "signup" && password !== confirmPassword) {
-      setError("Passwords do not match. Please re-check.");
-      setLoading(false);
-      return;
+    if (mode === "signup") {
+      if (!businessName.trim()) {
+        setError("Please enter your Business or Brand name.");
+        setLoading(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match. Please re-check.");
+        setLoading(false);
+        return;
+      }
     }
 
     if (password.length < 6) {
@@ -65,8 +79,12 @@ function LoginForm() {
         await signIn(email.trim(), password);
         setSuccessMsg("Signed in successfully! Redirecting...");
       } else {
-        await signUp(email.trim(), password);
-        setSuccessMsg("Account created successfully! Redirecting to studio...");
+        await signUp(email.trim(), password, {
+          businessName: businessName.trim(),
+          phone: phone.trim(),
+          orderRef: orderRef.trim(),
+        });
+        setSuccessMsg("Account registered! Awaiting Super Admin review...");
       }
       setTimeout(() => {
         router.push(redirectUrl);
@@ -76,8 +94,12 @@ function LoginForm() {
       let message = "Authentication failed. Please check your credentials.";
       if (err.code === "auth/email-already-in-use") {
         message = "This email is already registered. Please sign in instead.";
-      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-        message = "Incorrect email or password. Please try again or create a new account.";
+      } else if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found"
+      ) {
+        message = "Incorrect email or password. Please try again or click 'Forgot password?'.";
       } else if (err.code === "auth/invalid-email") {
         message = "Please enter a valid email address.";
       } else if (err.code === "auth/weak-password") {
@@ -90,35 +112,8 @@ function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError(null);
-    setSuccessMsg(null);
-
-    try {
-      await signInWithGoogle();
-      setSuccessMsg("Signed in with Google! Redirecting...");
-      setTimeout(() => {
-        router.push(redirectUrl);
-      }, 700);
-    } catch (err: any) {
-      console.error("Google sign-in error:", err);
-      if (err.code === "auth/popup-closed-by-user") {
-        // User closed the popup, no error needed
-        setGoogleLoading(false);
-        return;
-      }
-      if (err.code === "auth/unauthorized-domain") {
-        setError("This domain is not yet authorized in Firebase Console > Authentication > Settings > Authorized Domains.");
-      } else {
-        setError(err.message || "Google sign-in failed. Please try again.");
-      }
-      setGoogleLoading(false);
-    }
-  };
-
   const handleForgotPassword = async () => {
-    if (!email) {
+    if (!email.trim()) {
       setError("Please type your email address above first, then click 'Forgot password?'.");
       return;
     }
@@ -128,20 +123,21 @@ function LoginForm() {
     try {
       if (!auth) throw new Error("Firebase Auth is not initialized");
       await sendPasswordResetEmail(auth, email.trim());
-      setSuccessMsg(`Password reset link sent to ${email.trim()}! Please check your inbox/spam folder.`);
+      setSuccessMsg(`Password reset link sent to ${email.trim()}! Please check your inbox or spam folder.`);
     } catch (err: any) {
-      if (err.code === "auth/unauthorized-domain") {
-        setError("Please add this domain to Firebase Console > Authentication > Settings > Authorized Domains.");
-      } else {
-        setError(err.message || "Failed to send password reset email.");
-      }
+      setError(err.message || "Failed to send password reset email.");
     } finally {
       setResetLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 selection:bg-purple-600 selection:text-white">
+      {/* Background glow halos */}
+      <div className="fixed inset-0 pointer-events-none flex items-center justify-center -z-10">
+        <div className="w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[130px]" />
+      </div>
+
       <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-7 sm:p-8 shadow-2xl animate-fade-slide-up">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-6">
@@ -156,40 +152,20 @@ function LoginForm() {
             </span>
           </Link>
 
-          {/* Prominent Callout Banner */}
+          {/* Callout Banner */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold mb-3 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-            <span>Sign Up or Sign In to create your profile</span>
+            <span>Smart Digital Profiles &amp; Menus</span>
           </div>
 
           <h1 className="text-xl font-extrabold text-white">
-            {mode === "signin" ? "Sign In to Your Studio" : "Create Your Studio Account"}
+            {mode === "signin" ? "Sign In to Your Studio" : "Create Client Account"}
           </h1>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs">
+          <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
             {mode === "signin"
-              ? "Access your dashboard to customize digital profile templates, manage client links, and edit brand themes."
-              : "Register your account to unlock the two-panel live reactive profile builder and smart interactive links."}
+              ? "Access your studio dashboard to manage digital profiles, menus, and client links."
+              : "Register your business to activate your digital presence after placing a card order."}
           </p>
-        </div>
-
-        {/* Google Sign-In Button */}
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading || loading}
-          className="w-full mb-4 py-3 px-4 bg-white hover:bg-gray-50 text-slate-800 text-xs font-bold rounded-xl shadow-md flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50 border border-gray-200"
-        >
-          <GoogleIcon className="flex-shrink-0" />
-          <span>
-            {googleLoading ? "Signing in with Google..." : "Continue with Google"}
-          </span>
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-slate-800" />
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">or use email</span>
-          <div className="flex-1 h-px bg-slate-800" />
         </div>
 
         {/* Auth Mode Switcher Tabs */}
@@ -199,10 +175,11 @@ function LoginForm() {
             onClick={() => {
               setMode("signin");
               setError(null);
+              setSuccessMsg(null);
             }}
-            className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               mode === "signin"
-                ? "bg-purple-600 text-white shadow-sm"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -214,10 +191,11 @@ function LoginForm() {
             onClick={() => {
               setMode("signup");
               setError(null);
+              setSuccessMsg(null);
             }}
-            className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               mode === "signup"
-                ? "bg-purple-600 text-white shadow-sm"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -226,7 +204,7 @@ function LoginForm() {
           </button>
         </div>
 
-        {/* Alerts */}
+        {/* Status Alerts */}
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -243,6 +221,61 @@ function LoginForm() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Sign Up Specific Fields */}
+          {mode === "signup" && (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Business / Brand Name *
+                </label>
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="e.g. Kaia Café, Juan Dela Cruz"
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Contact / Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 0917 123 4567"
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Order Reference # / FB Name (Optional)
+                </label>
+                <div className="relative">
+                  <Tag className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                  <input
+                    type="text"
+                    value={orderRef}
+                    onChange={(e) => setOrderRef(e.target.value)}
+                    placeholder="e.g. Order #1049 or your FB Messenger name"
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Email */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">
               Email Address *
@@ -260,6 +293,7 @@ function LoginForm() {
             </div>
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">
               Password *
@@ -281,7 +315,7 @@ function LoginForm() {
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={resetLoading}
-                  className="text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  className="text-[11px] text-purple-400 hover:text-purple-300 font-medium transition-colors cursor-pointer"
                 >
                   {resetLoading ? "Sending reset link..." : "Forgot password?"}
                 </button>
@@ -289,6 +323,7 @@ function LoginForm() {
             )}
           </div>
 
+          {/* Confirm Password (Sign Up) */}
           {mode === "signup" && (
             <div className="animate-fade-slide-up">
               <label className="block text-xs font-semibold text-slate-300 mb-1">
@@ -308,10 +343,20 @@ function LoginForm() {
             </div>
           )}
 
+          {/* Notice on Approval */}
+          {mode === "signup" && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 flex items-start gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <span>
+                New accounts undergo quick Super Admin review to activate your Studio. Please ensure you have placed a physical card order.
+              </span>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={loading || googleLoading}
-            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+            disabled={loading}
+            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
           >
             <span>
               {loading
@@ -320,11 +365,17 @@ function LoginForm() {
                   : "Creating account..."
                 : mode === "signin"
                 ? "Sign In to Studio"
-                : "Create Free Account"}
+                : "Register for Studio Access"}
             </span>
-            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-xs text-slate-500">
+          <Link href="/" className="hover:text-slate-300 transition-colors">
+            ← Back to Homepage
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -334,8 +385,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-          Loading...
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

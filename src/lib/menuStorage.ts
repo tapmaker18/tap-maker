@@ -160,7 +160,12 @@ export async function getMenuBySlug(slug: string): Promise<Menu | null> {
 
   if (isFirebaseConfigured && db) {
     try {
-      const q = query(collection(db, "menus"), where("slug", "==", cleanSlug));
+      // Match the public read rule so Firestore can authorize the query.
+      const q = query(
+        collection(db, "menus"),
+        where("slug", "==", cleanSlug),
+        where("status", "==", "published")
+      );
       const snap = await getDocs(q);
       if (!snap.empty) {
         const d = snap.docs[0];

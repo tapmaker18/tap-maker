@@ -167,7 +167,13 @@ export async function getProfileBySlug(slug: string): Promise<Profile | null> {
 
   if (isFirebaseConfigured && db) {
     try {
-      const q = query(collection(db, "profiles"), where("slug", "==", cleanSlug));
+      // The public Firestore rule permits only published records, so the query
+      // must carry the same status constraint to be authorized.
+      const q = query(
+        collection(db, "profiles"),
+        where("slug", "==", cleanSlug),
+        where("status", "==", "published")
+      );
       const snap = await getDocs(q);
       if (!snap.empty) {
         const d = snap.docs[0];

@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function NewMenuPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isPending, isSuspended } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,6 +17,11 @@ export default function NewMenuPage() {
 
     if (!user) {
       router.push("/login?redirect=/editor/menu/new");
+      return;
+    }
+
+    if (isPending || isSuspended) {
+      router.push("/dashboard");
       return;
     }
 
@@ -46,7 +51,7 @@ export default function NewMenuPage() {
     }
 
     initializeMenu();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, isPending, isSuspended]);
 
   if (authLoading) {
     return (

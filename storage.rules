@@ -2,8 +2,10 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /avatars/{allPaths=**} {
-      allow read: if true; // Public can see profile avatars
-      allow write: if request.auth != null; // Only admin can upload
+      allow read: if true;
+      // Writes are restricted to the Firebase Admin service until uploads are
+      // moved to an owner-scoped path with validation rules.
+      allow write: if request.auth != null && request.auth.token.role == 'super_admin';
     }
   }
 }

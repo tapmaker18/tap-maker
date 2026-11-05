@@ -18,6 +18,15 @@ import {
 import { getAllAnalyticsSummaries, AnalyticsSummary } from "@/lib/analytics";
 import { QRCodeModal } from "@/components/editor/QRCodeModal";
 import { LetterAvatar } from "@/components/ui/LetterAvatar";
+import { PendingApprovalScreen } from "@/components/auth/PendingApprovalScreen";
+import {
+  getAllMembers,
+  updateMemberStatus,
+  addMemberAiScans,
+  deleteMemberAccount,
+  createMemberByAdmin,
+} from "@/lib/userStorage";
+import { MemberAccount, AccountStatus } from "@/lib/types";
 import {
   Plus,
   Search,
@@ -44,14 +53,37 @@ import {
   BarChart3,
   UtensilsCrossed,
   TrendingUp,
+  Check,
+  X,
+  UserCheck,
+  UserX,
+  Clock,
+  Key,
+  ShieldAlert,
+  RefreshCw,
+  Mail,
+  Phone,
+  Tag,
+  Building2,
+  Bot,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-type DashboardTab = "profiles" | "menus";
+type DashboardTab = "profiles" | "menus" | "members";
+
+const SUPER_ADMIN_EMAIL = "adriancalicdan2@gmail.com";
+
+function isSuperAdminMember(member: MemberAccount): boolean {
+  return (
+    member.role === "super_admin" ||
+    member.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading: authLoading, signOut, isAdmin } = useAuth();
+  const { user, memberAccount, loading: authLoading, signOut, isAdmin, isPending, isSuspended } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [search, setSearch] = useState("");
@@ -65,6 +97,22 @@ export default function DashboardPage() {
   // Analytics data
   const [analytics, setAnalytics] = useState<Record<string, AnalyticsSummary>>({});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // Members Management state (Super Admin)
+  const [members, setMembers] = useState<MemberAccount[]>([]);
+  const [memberFilter, setMemberFilter] = useState<"all" | "pending" | "approved" | "suspended">("all");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [addAccountModalOpen, setAddAccountModalOpen] = useState(false);
+  const [addAccountForm, setAddAccountForm] = useState({
+    email: "",
+    pass: "",
+    businessName: "",
+    phone: "",
+    orderRef: "",
+    aiScansLimit: 5,
+  });
+  const [addAccountLoading, setAddAccountLoading] = useState(false);
+  const [addAccountMsg, setAddAccountMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,17 +156,91 @@ export default function DashboardPage() {
     }
   };
 
-  // Fast initial load: runs profiles and menus concurrently, unblocks UI immediately
+  const loadMembers = async () => {
+    if (!isAdmin) return;
+    try {
+      const list = await getAllMembers();
+      setMembers(list);
+    } catch (err) {
+      console.warn("Error loading members:", err);
+    }
+  };
+
+  const handleApproveMember = async (uid: string) => {
+    await updateMemberStatus(uid, "approved");
+    await loadMembers();
+  };
+
+  const handleSuspendMember = async (uid: string) => {
+    await updateMemberStatus(uid, "suspended");
+    await loadMembers();
+  };
+
+  const handleReactivateMember = async (uid: string) => {
+    await updateMemberStatus(uid, "approved");
+    await loadMembers();
+  };
+
+  const handleAddAiScans = async (uid: string) => {
+    await addMemberAiScans(uid, 5);
+    await loadMembers();
+  };
+
+  const handleDeleteMember = async (uid: string, name: string) => {
+    if (confirm(`Are you sure you want to delete account "${name}"? This cannot be undone.`)) {
+      await deleteMemberAccount(uid);
+      await loadMembers();
+    }
+  };
+
+  const handleAddAccountSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddAccountLoading(true);
+    setAddAccountMsg(null);
+    try {
+      await createMemberByAdmin(addAccountForm);
+      setAddAccountMsg({
+        type: "success",
+        text: `Account "${addAccountForm.businessName}" created and pre-approved!`,
+      });
+      await loadMembers();
+      setTimeout(() => {
+        setAddAccountModalOpen(false);
+        setAddAccountForm({
+          email: "",
+          pass: "",
+          businessName: "",
+          phone: "",
+          orderRef: "",
+          aiScansLimit: 5,
+        });
+        setAddAccountMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setAddAccountMsg({
+        type: "error",
+        text: err.message || "Failed to create account.",
+      });
+    } finally {
+      setAddAccountLoading(false);
+    }
+  };
+
+  // Fast initial load: runs profiles, menus, and members concurrently, unblocks UI immediately
   const loadDashboardData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [profileList, menuList] = await Promise.all([
+      const [profileList, menuList, memberList] = await Promise.all([
         getProfiles(user.uid, isAdmin),
         getMenus(user.uid, isAdmin),
+        isAdmin ? getAllMembers() : Promise.resolve([]),
       ]);
       setProfiles(profileList);
       setMenus(menuList);
+      if (isAdmin) {
+        setMembers(memberList);
+      }
       // Background analytics fetch (non-blocking)
       loadAnalytics(profileList);
     } catch (err) {
@@ -129,10 +251,10 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && !isPending && !isSuspended) {
       loadDashboardData();
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, isPending, isSuspended]);
 
   const handleDuplicate = async (id: string) => {
     const dup = await duplicateProfile(id, user?.uid);
@@ -219,6 +341,30 @@ export default function DashboardPage() {
   const totalViews = Object.values(analytics).reduce((sum, a) => sum + (a.totalViews || 0), 0);
   const totalClicks = Object.values(analytics).reduce((sum, a) => sum + (a.totalClicks || 0), 0);
 
+  // Pending Approval Gate: Unapproved members cannot enter studio dashboard
+  if (!authLoading && user && (isPending || isSuspended)) {
+    return <PendingApprovalScreen />;
+  }
+
+  // Super Admin Member stats
+  const clientMembers = members.filter((m) => !isSuperAdminMember(m));
+  const pendingCount = clientMembers.filter((m) => m.status === "pending").length;
+  const activeMembersCount = clientMembers.filter((m) => m.status === "approved").length;
+  const suspendedCount = clientMembers.filter((m) => m.status === "suspended").length;
+  const totalAiScansUsed = clientMembers.reduce((sum, m) => sum + (m.aiScansUsed || 0), 0);
+
+  // Filter members for Super Admin management tab
+  const filteredMembers = clientMembers.filter((m) => {
+    const matchesFilter = memberFilter === "all" ? true : m.status === memberFilter;
+    const q = memberSearch.toLowerCase();
+    const matchesSearch =
+      m.businessName.toLowerCase().includes(q) ||
+      m.email.toLowerCase().includes(q) ||
+      (m.phone && m.phone.toLowerCase().includes(q)) ||
+      (m.orderRef && m.orderRef.toLowerCase().includes(q));
+    return matchesFilter && matchesSearch;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Dashboard Top Header */}
@@ -243,6 +389,14 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Member AI Quota Display (Regular Approved Members) */}
+          {!isAdmin && memberAccount && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span>AI Scans: {memberAccount.aiScansUsed || 0} / {memberAccount.aiScansLimit || 5}</span>
+            </div>
+          )}
+
           <a
             href="/"
             className="text-xs text-slate-400 hover:text-white transition-colors hidden sm:block"
@@ -258,13 +412,21 @@ export default function DashboardPage() {
               <Plus className="w-4 h-4" />
               <span>Create Profile</span>
             </button>
-          ) : (
+          ) : activeTab === "menus" ? (
             <button
               onClick={() => router.push("/editor/menu/new")}
               className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-md shadow-orange-600/30 transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Create Menu</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setAddAccountModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Client Account</span>
             </button>
           )}
 
@@ -291,7 +453,7 @@ export default function DashboardPage() {
                   await signOut();
                   router.push("/login");
                 }}
-                className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Sign Out of Studio"
               >
                 <LogOut className="w-4 h-4" />
@@ -302,12 +464,12 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-6">
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-2xl w-fit">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-2xl w-fit">
           <button
             onClick={() => setActiveTab("profiles")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "profiles"
                 ? "bg-purple-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
@@ -318,7 +480,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("menus")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "menus"
                 ? "bg-orange-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
@@ -332,7 +494,59 @@ export default function DashboardPage() {
               </span>
             )}
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab("members")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "members"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Users className="w-4 h-4 text-indigo-400" />
+              <span>Client Accounts</span>
+              {pendingCount > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] animate-pulse">
+                  {pendingCount} Pending
+                </span>
+              ) : clientMembers.length > 0 ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10">
+                  {clientMembers.length}
+                </span>
+              ) : null}
+            </button>
+          )}
         </div>
+
+        {/* Super Admin: Pending Accounts Action Banner */}
+        {isAdmin && pendingCount > 0 && activeTab !== "members" && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-slide-up">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>{pendingCount} Client Account{pendingCount > 1 ? "s" : ""} Pending Review</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Action Required</span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Verify physical card orders and grant studio access with one click.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setActiveTab("members");
+                setMemberFilter("pending");
+              }}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors flex-shrink-0 cursor-pointer self-start sm:self-auto shadow-md shadow-amber-500/20"
+            >
+              Review Accounts →
+            </button>
+          </div>
+        )}
 
         {/* ============================================================ */}
         {/* PROFILES TAB */}
@@ -894,7 +1108,511 @@ export default function DashboardPage() {
             )}
           </>
         )}
+        {/* ============================================================ */}
+        {/* MEMBERS MANAGEMENT TAB (Super Admin) */}
+        {/* ============================================================ */}
+        {activeTab === "members" && isAdmin && (
+          <>
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Clients</span>
+                  <h2 className="text-2xl font-black text-white mt-0.5">{clientMembers.length}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <Users className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-2xl border transition-all ${
+                pendingCount > 0
+                  ? "bg-amber-500/10 border-amber-500/30 shadow-lg shadow-amber-500/10"
+                  : "bg-slate-900 border-slate-800"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Pending Review</span>
+                    <h2 className="text-2xl font-black text-amber-300 mt-0.5 flex items-center gap-2">
+                      <span>{pendingCount}</span>
+                      {pendingCount > 0 && (
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      )}
+                    </h2>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Active Members</span>
+                  <h2 className="text-2xl font-black text-white mt-0.5">{activeMembersCount}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Suspended</span>
+                  <h2 className="text-2xl font-black text-white mt-0.5">{suspendedCount}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                  <UserX className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">AI Scans Used</span>
+                  <h2 className="text-2xl font-black text-white mt-0.5">{totalAiScansUsed}</h2>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Pills, Search Bar, and Add Account Button */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800">
+                {(["all", "pending", "approved", "suspended"] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setMemberFilter(st)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                      memberFilter === st
+                        ? st === "pending"
+                          ? "bg-amber-500 text-slate-950 font-black shadow-sm"
+                          : st === "approved"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : st === "suspended"
+                          ? "bg-rose-600 text-white shadow-sm"
+                          : "bg-indigo-600 text-white shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {st === "approved" ? "Active" : st}
+                    {st === "pending" && pendingCount > 0 && (
+                      <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-300 text-[10px]">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search & Add Action */}
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1 sm:w-72">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Search by business, email, phone, order #..."
+                    className="w-full text-xs bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setAddAccountModalOpen(true)}
+                  className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold rounded-2xl shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer flex-shrink-0"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Client Account</span>
+                  <span className="sm:hidden">Add</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Members List */}
+            {filteredMembers.length === 0 ? (
+              <div className="text-center py-16 px-4 rounded-3xl border border-dashed border-slate-800 bg-slate-900/30">
+                <Users className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-white">No Member Accounts Found</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                  {memberSearch
+                    ? `No accounts match "${memberSearch}". Try adjusting your search query.`
+                    : memberFilter === "pending"
+                    ? "Great news! There are no pending account registrations waiting for review."
+                    : "No client accounts have been registered under this filter."}
+                </p>
+                {memberFilter !== "all" && (
+                  <button
+                    onClick={() => setMemberFilter("all")}
+                    className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold"
+                  >
+                    View All Accounts
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredMembers.map((m) => {
+                  const isSuperAdminAccount = isSuperAdminMember(m);
+                  const memberProfiles = profiles.filter((p) => p.userId === m.uid);
+                  const memberMenus = menus.filter((menu) => menu.userId === m.uid);
+                  const memberViews = memberProfiles.reduce(
+                    (sum, p) => sum + (analytics[p.id]?.totalViews || 0),
+                    0
+                  );
+
+                  return (
+                    <div
+                      key={m.uid}
+                      className={`relative rounded-3xl bg-slate-900 border p-5 shadow-xl transition-all duration-200 flex flex-col justify-between ${
+                        m.status === "pending"
+                          ? "border-amber-500/40 bg-gradient-to-br from-amber-500/5 to-slate-900"
+                          : m.status === "suspended"
+                          ? "border-rose-500/30 opacity-75"
+                          : "border-slate-800 hover:border-slate-700"
+                      }`}
+                    >
+                      <div>
+                        {/* Top Row: Business Name & Status Badge */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-extrabold text-white text-base shadow-md flex-shrink-0">
+                              {m.businessName?.charAt(0)?.toUpperCase() || "C"}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-extrabold text-white truncate flex items-center gap-1.5">
+                                <span>{m.businessName || "Unnamed Business"}</span>
+                                {isSuperAdminAccount && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    Admin
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="text-xs text-slate-400 font-mono truncate">{m.email}</p>
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          {m.status === "pending" ? (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1 flex-shrink-0 animate-pulse">
+                              <Clock className="w-3 h-3" />
+                              <span>Pending</span>
+                            </span>
+                          ) : m.status === "approved" ? (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 flex-shrink-0">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Active</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[10px] font-bold flex items-center gap-1 flex-shrink-0">
+                              <UserX className="w-3 h-3" />
+                              <span>Suspended</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Metadata Details Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 mb-3">
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">Order Ref #</span>
+                            <span className="text-purple-300 font-semibold truncate block">
+                              {m.orderRef || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">Phone</span>
+                            <span className="text-slate-300 font-mono truncate block">
+                              {m.phone || "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">Registered</span>
+                            <span className="text-slate-400 truncate block">
+                              {m.createdAt ? new Date(m.createdAt).toLocaleDateString() : "—"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">Created Items</span>
+                            <span className="text-slate-300 font-bold block">
+                              {memberProfiles.length} profiles • {memberMenus.length} menus
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* AI Token Quota Bar */}
+                        <div className="p-3 rounded-2xl bg-slate-950/40 border border-slate-800/60 mb-4">
+                          <div className="flex items-center justify-between text-xs mb-1.5">
+                            <span className="text-slate-400 flex items-center gap-1 text-[11px] font-medium">
+                              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                              <span>AI Menu Scans Quota</span>
+                            </span>
+                            <span className="text-xs font-mono font-bold text-white">
+                              {isSuperAdminAccount ? "Unlimited (Admin)" : `${m.aiScansUsed || 0} / ${m.aiScansLimit || 5}`}
+                            </span>
+                          </div>
+                          {!isSuperAdminAccount && (
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  (m.aiScansUsed || 0) >= (m.aiScansLimit || 5)
+                                    ? "bg-rose-500"
+                                    : "bg-gradient-to-r from-cyan-500 to-purple-500"
+                                }`}
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (((m.aiScansUsed || 0) / (m.aiScansLimit || 5)) * 100)
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons Bar */}
+                      <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        {/* Pending Account: 1-Click Approve or Reject */}
+                        {m.status === "pending" ? (
+                          <div className="flex items-center gap-2 w-full">
+                            <button
+                              onClick={() => handleApproveMember(m.uid)}
+                              className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all cursor-pointer active:scale-95"
+                            >
+                              <Check className="w-4 h-4 stroke-[3]" />
+                              <span>Approve Client Access</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMember(m.uid, m.businessName)}
+                              className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-colors"
+                              title="Reject & Delete Registration"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Approved / Suspended Account Actions */}
+                            <div className="flex items-center gap-1.5">
+                              {/* Top Up AI Scans */}
+                              {!isSuperAdminAccount && (
+                                <button
+                                  onClick={() => handleAddAiScans(m.uid)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                  title="Add +5 AI Scans to Member Quota"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>+5 AI Scans</span>
+                                </button>
+                              )}
+
+                              {/* Inspect Profiles & Menus */}
+                              <button
+                                onClick={() => {
+                                  setAdminUserFilter(m.uid);
+                                  setActiveTab("profiles");
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                title="Filter dashboard profiles by this client"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Inspect ({memberProfiles.length})</span>
+                              </button>
+                            </div>
+
+                            {/* Suspend or Reactivate / Delete */}
+                            {!isSuperAdminAccount && (
+                              <div className="flex items-center gap-1">
+                                {m.status === "approved" ? (
+                                  <button
+                                    onClick={() => handleSuspendMember(m.uid)}
+                                    className="px-2.5 py-1.5 rounded-xl text-amber-400 hover:bg-amber-500/10 text-[11px] font-semibold transition-colors"
+                                  >
+                                    Suspend
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleReactivateMember(m.uid)}
+                                    className="px-2.5 py-1.5 rounded-xl text-emerald-400 hover:bg-emerald-500/10 text-[11px] font-semibold transition-colors"
+                                  >
+                                    Reactivate
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => handleDeleteMember(m.uid, m.businessName)}
+                                  className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
+                                  title="Delete Account"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
       </main>
+
+      {/* Super Admin: + Add Account Modal */}
+      {addAccountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-slide-up">
+          <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-6 sm:p-7 shadow-2xl relative">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">Add Client Account</h3>
+                  <p className="text-[11px] text-slate-400">Account will be immediately pre-approved</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAddAccountModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {addAccountMsg && (
+              <div
+                className={`p-3 rounded-xl mb-4 text-xs flex items-center gap-2 ${
+                  addAccountMsg.type === "success"
+                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                    : "bg-rose-500/10 border border-rose-500/30 text-rose-400"
+                }`}
+              >
+                {addAccountMsg.type === "success" ? (
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span>{addAccountMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAddAccountSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Business / Brand Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={addAccountForm.businessName}
+                  onChange={(e) =>
+                    setAddAccountForm({ ...addAccountForm, businessName: e.target.value })
+                  }
+                  placeholder="e.g. Kaia Coffee House"
+                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Client Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={addAccountForm.email}
+                  onChange={(e) => setAddAccountForm({ ...addAccountForm, email: e.target.value })}
+                  placeholder="client@company.com"
+                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Initial Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={addAccountForm.pass}
+                  onChange={(e) => setAddAccountForm({ ...addAccountForm, pass: e.target.value })}
+                  placeholder="At least 6 characters"
+                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    value={addAccountForm.phone}
+                    onChange={(e) =>
+                      setAddAccountForm({ ...addAccountForm, phone: e.target.value })
+                    }
+                    placeholder="0917 123 4567"
+                    className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Order Ref #</label>
+                  <input
+                    type="text"
+                    value={addAccountForm.orderRef}
+                    onChange={(e) =>
+                      setAddAccountForm({ ...addAccountForm, orderRef: e.target.value })
+                    }
+                    placeholder="e.g. Order #1052"
+                    className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  AI Menu Scans Quota
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={addAccountForm.aiScansLimit}
+                  onChange={(e) =>
+                    setAddAccountForm({
+                      ...addAccountForm,
+                      aiScansLimit: parseInt(e.target.value) || 5,
+                    })
+                  }
+                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddAccountModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addAccountLoading}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {addAccountLoading ? "Creating..." : "Create & Pre-Approve"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Modal for Selected Profile */}
       {activeQrProfile && (

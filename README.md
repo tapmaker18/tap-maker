@@ -39,7 +39,7 @@
 
 - **Framework**: Next.js 14+ (App Router) with TypeScript
 - **Styling**: Tailwind CSS + Custom CSS Variables & Animations + Lucide React
-- **Backend & Auth**: Firebase Firestore + Firebase Auth + Firebase Storage
+- **Backend & Auth**: Firebase Firestore + Firebase Auth + Firebase Storage, with Firebase Admin for protected account actions
 - **Local Dev Engine**: Zero-config LocalStorage fallback for instant offline development
 - **QR Codes**: `qrcode.react` with vector SVG download
 
@@ -63,7 +63,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser:
 - **Cyber Glow Profile Demo**: [http://localhost:3000/aura](http://localhost:3000/aura)
 - **Executive Card Demo**: [http://localhost:3000/juan](http://localhost:3000/juan)
 - **Modern Bio Demo**: [http://localhost:3000/acme](http://localhost:3000/acme)
-- **Admin Login**: [http://localhost:3000/login](http://localhost:3000/login) (Credentials: `adriancalicdan2@gmail.com` / `Mojijo19`)
+- **Admin Login**: [http://localhost:3000/login](http://localhost:3000/login)
 
 ---
 
@@ -79,10 +79,6 @@ cp .env.example .env.local
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME="TMaker — NFC Digital Profile Studio"
 
-# Admin Authentication
-ADMIN_EMAIL=adriancalicdan2@gmail.com
-ADMIN_PASSWORD=Mojijo19
-
 # Firebase Configuration (Optional in local development; falls back to embedded LocalStorage engine)
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -90,7 +86,21 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# Server-only Firebase Admin credentials. These are required in a deployed
+# environment for approvals, suspensions, account creation/deletion, and AI quotas.
+FIREBASE_SERVICE_ACCOUNT_JSON='{"project_id":"...","client_email":"...","private_key":"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n"}'
+
+# Server-only Gemini key for the menu scanner. Do not use NEXT_PUBLIC_.
+GEMINI_API_KEY=your_gemini_key
 ```
+
+## Super Admin setup
+
+1. Create the Firebase Authentication account for the Super Admin address and verify its email address.
+2. Set `FIREBASE_SERVICE_ACCOUNT_JSON` (or the three equivalent server variables) in the deployment environment; never expose it to the browser.
+3. Sign in once with `adriancalicdan2@gmail.com`. The app assigns the verified owner an immutable Firebase custom `super_admin` role through the server-only bootstrap endpoint. All later admin access is based on that claim, not a client-editable Firestore field.
+4. Deploy the updated `firestore.rules` and `storage.rules` before enabling the member-management UI.
 
 ---
 

@@ -48,7 +48,7 @@ import Link from "next/link";
 export default function MenuEditorPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, memberAccount, refreshMemberAccount, loading: authLoading, isAdmin, isPending, isSuspended } = useAuth();
   const menuId = params.id as string;
 
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -84,6 +84,10 @@ export default function MenuEditorPage() {
       router.push(`/login?redirect=/editor/menu/${menuId}`);
       return;
     }
+    if (isPending || isSuspended) {
+      router.push("/dashboard");
+      return;
+    }
 
     async function load() {
       try {
@@ -94,7 +98,6 @@ export default function MenuEditorPage() {
         }
 
         // Verify ownership (unless admin)
-        const isAdmin = user?.email === "adriancalicdan2@gmail.com";
         if (data.userId && user?.uid && data.userId !== user.uid && !isAdmin) {
           alert("You do not have permission to edit this menu.");
           router.push("/dashboard");
@@ -114,7 +117,7 @@ export default function MenuEditorPage() {
     }
 
     load();
-  }, [menuId, user, authLoading, router]);
+  }, [menuId, user, authLoading, router, isPending, isSuspended, isAdmin]);
 
   // Load existing Gemini API key if saved
   useEffect(() => {
@@ -316,6 +319,17 @@ export default function MenuEditorPage() {
   // Run AI Scan
   const handleRunAiScan = async () => {
     if (!aiImageFile || !menu) return;
+
+    // Check Member AI Quota (Super admin has unlimited access)
+    if (user && !isAdmin && memberAccount) {
+      if ((memberAccount.aiScansUsed || 0) >= (memberAccount.aiScansLimit || 5)) {
+        setAiError(
+          `You have reached your AI Menu Scans quota (${memberAccount.aiScansLimit}/${memberAccount.aiScansLimit}). Please contact super admin to request additional scans.`
+        );
+        return;
+      }
+    }
+
     setAiScanning(true);
     setAiError(null);
 
@@ -325,6 +339,11 @@ export default function MenuEditorPage() {
       }
 
       const result = await scanMenuWithGemini(aiImageFile, aiCustomKey.trim() || undefined);
+
+      // The server atomically checks and consumes the quota before scanning.
+      if (user) {
+        await refreshMemberAccount();
+      }
 
       let newCategories: MenuCategory[] = [];
       if (aiAppendMode === "replace") {

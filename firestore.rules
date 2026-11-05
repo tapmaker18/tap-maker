@@ -1,69 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'adriancalicdan2@gmail.com';
+    // Assigned exclusively by Firebase Admin after the trusted owner signs in.
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'super_admin';
     }
 
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Profiles collection
+    // Normal members can use the studio only after Super Admin approval.
+    function isApprovedMember() {
+      return isSuperAdmin() || (
+        isAuthenticated()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved'
+      );
+    }
+
+    function isApprovedOwner(userId) {
+      return isOwner(userId) && isApprovedMember();
+    }
+
     match /profiles/{profileId} {
-      // Anyone can read published profiles (for public NFC links)
-      // Authenticated users can read their own profiles
-      // Super admin can read all
       allow read: if resource.data.status == 'published'
-                  || isOwner(resource.data.userId)
-                  || isAdmin();
-
-      // Users can create profiles with their own userId
-      allow create: if isAuthenticated()
+                  || isApprovedOwner(resource.data.userId)
+                  || isSuperAdmin();
+      allow create: if isApprovedMember()
                     && request.resource.data.userId == request.auth.uid;
-
-      // Users can update/delete their own profiles; super admin can update/delete any
-      allow update, delete: if isOwner(resource.data.userId)
-                            || isAdmin();
+      allow update: if (isApprovedOwner(resource.data.userId)
+                        && request.resource.data.userId == resource.data.userId)
+                    || isSuperAdmin();
+      allow delete: if isApprovedOwner(resource.data.userId) || isSuperAdmin();
 
       match /links/{linkId} {
         allow read: if get(/databases/$(database)/documents/profiles/$(profileId)).data.status == 'published'
-                    || isAuthenticated();
-        allow write: if isAuthenticated();
+                    || isApprovedOwner(get(/databases/$(database)/documents/profiles/$(profileId)).data.userId)
+                    || isSuperAdmin();
+        allow write: if isApprovedOwner(get(/databases/$(database)/documents/profiles/$(profileId)).data.userId)
+                     || isSuperAdmin();
       }
 
-      // Profile Analytics events (views and clicks)
-      // Anyone can write analytics events (public visitors scanning NFC/visiting link)
-      // Only profile owner and admin can read analytics
+      // Public visitors may add event documents, but cannot alter existing data.
       match /analytics/{docId} {
-        allow read: if isOwner(get(/databases/$(database)/documents/profiles/$(profileId)).data.userId)
-                    || isAdmin();
-        allow write: if true;
+        allow read: if isApprovedOwner(get(/databases/$(database)/documents/profiles/$(profileId)).data.userId)
+                    || isSuperAdmin();
+        allow create: if true;
+        allow update, delete: if isSuperAdmin();
       }
     }
 
-    // Digital Menus collection (Restaurant/Café menus)
     match /menus/{menuId} {
-      // Anyone can read published menus (for public customer QR/NFC access)
-      // Authenticated users can read their own menus
-      // Super admin can read all
       allow read: if resource.data.status == 'published'
-                  || isOwner(resource.data.userId)
-                  || isAdmin();
-
-      // Users can create menus with their own userId
-      allow create: if isAuthenticated()
+                  || isApprovedOwner(resource.data.userId)
+                  || isSuperAdmin();
+      allow create: if isApprovedMember()
                     && request.resource.data.userId == request.auth.uid;
+      allow update: if (isApprovedOwner(resource.data.userId)
+                        && request.resource.data.userId == resource.data.userId)
+                    || isSuperAdmin();
+      allow delete: if isApprovedOwner(resource.data.userId) || isSuperAdmin();
+    }
 
-      // Users can update/delete their own menus; super admin can manage all
-      allow update, delete: if isOwner(resource.data.userId)
-                            || isAdmin();
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isSuperAdmin();
+
+      // Browser registrations can create only a harmless pending member record.
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.role == 'member'
+                    && request.resource.data.aiScansLimit == 5
+                    && request.resource.data.aiScansUsed == 0;
+
+      // Members may only update contact details. RBAC lifecycle and quotas are
+      // managed by the Firebase Admin API for the Super Admin only.
+      allow update: if isSuperAdmin()
+                    || (isOwner(userId)
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['businessName', 'contactName', 'phone', 'orderRef', 'lastLoginAt']));
+      allow delete: if isSuperAdmin();
     }
   }
 }

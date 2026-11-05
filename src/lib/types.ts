@@ -188,3 +188,25 @@ export interface Menu {
   createdAt: string;
   updatedAt: string;
 }
+
+// ============================================================
+// Member & User Account Types (B2B SaaS Approval Workflow)
+// ============================================================
+export type AccountStatus = "pending" | "approved" | "suspended";
+export type UserRole = "super_admin" | "member";
+
+export interface MemberAccount {
+  uid: string;
+  email: string;
+  businessName: string;
+  contactName?: string;
+  phone?: string;
+  orderRef?: string;
+  status: AccountStatus;
+  role: UserRole;
+  aiScansLimit: number;
+  aiScansUsed: number;
+  createdAt: string;
+  approvedAt?: string | null;
+  lastLoginAt?: string | null;
+}

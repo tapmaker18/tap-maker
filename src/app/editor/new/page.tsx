@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export default function NewProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isPending, isSuspended } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,6 +19,11 @@ export default function NewProfilePage() {
     if (!user) {
       // Must be logged in to create a profile template
       router.push("/login?redirect=/editor/new");
+      return;
+    }
+
+    if (isPending || isSuspended) {
+      router.push("/dashboard");
       return;
     }
 
@@ -125,7 +130,7 @@ export default function NewProfilePage() {
     }
 
     createAndRedirect();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, isPending, isSuspended]);
 
   if (authLoading) {
     return (
