@@ -293,6 +293,7 @@ export default function DashboardPage() {
       );
       return;
     }
+    router.push("/editor/menu/new");
   };
 
   // Fast initial load: runs profiles, menus, and members concurrently, unblocks UI immediately
