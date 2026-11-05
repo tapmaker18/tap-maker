@@ -1436,7 +1436,7 @@ export default function MenuEditorPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">AI Menu Photo Scanner</h3>
-                  <p className="text-[11px] text-slate-400">Powered by Google Gemini AI</p>
+                  <p className="text-[11px] text-slate-400">Powered by AI Vision (Groq / Gemini)</p>
                 </div>
               </div>
               <button

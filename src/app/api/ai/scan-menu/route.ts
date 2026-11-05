@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { getAdminDb, verifyAuthenticatedRequest } from "@/lib/firebaseAdmin";
 import { SUPER_ADMIN_ROLE } from "@/lib/admin";
 import type { MenuCategory, MenuItem } from "@/lib/types";
@@ -14,6 +15,8 @@ class ApiError extends Error {
     super(message);
   }
 }
+
+const MENU_PROMPT = `You are an expert OCR and menu transcription system. Analyze this photo of a restaurant or cafe menu and output strictly valid JSON, without markdown, matching this shape: {"businessName":"string or null","currency":"PHP, USD, EUR, etc.","categories":[{"name":"Category name","items":[{"name":"Item name","description":"Short description","price":120,"isFeatured":false,"tags":["bestseller"]}]}]}. Do not invent items. Use 0 for missing prices.`;
 
 function toMenuResult(parsed: Record<string, unknown>) {
   const detectedCurrency =
@@ -91,6 +94,48 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
   });
 }
 
+// ── Gemini ────────────────────────────────────────────────────────
+async function scanWithGemini(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
+  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+    model: "gemini-1.5-flash",
+  });
+  const result = await model.generateContent([
+    MENU_PROMPT,
+    {
+      inlineData: {
+        data: buffer.toString("base64"),
+        mimeType: mimeType || "image/jpeg",
+      },
+    },
+  ]);
+  return result.response.text().trim();
+}
+
+// ── Groq / Vision ────────────────────────────────────────────────
+async function scanWithGroq(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
+  const groq = new Groq({ apiKey });
+  const base64Image = buffer.toString("base64");
+  const dataUrl = `data:${mimeType || "image/jpeg"};base64,${base64Image}`;
+
+  const completion = await groq.chat.completions.create({
+    model: "qwen/qwen3.8-27b",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: MENU_PROMPT },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+    temperature: 0.1,
+    max_tokens: 4096,
+    response_format: { type: "json_object" },
+  });
+
+  return completion.choices[0]?.message?.content?.trim() ?? "";
+}
+
 export async function POST(request: Request) {
   try {
     const decoded = await verifyAuthenticatedRequest(request);
@@ -108,30 +153,40 @@ export async function POST(request: Request) {
       throw new ApiError("The menu image must be 8 MB or smaller.", 413);
     }
 
-    const apiKey =
-      typeof suppliedKey === "string" && suppliedKey.trim()
-        ? suppliedKey.trim()
-        : process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const customKey = typeof suppliedKey === "string" ? suppliedKey.trim() : "";
+    const groqKey = (customKey.startsWith("gsk_") ? customKey : null) || process.env.GROQ_API_KEY;
+    const geminiKey = (!customKey.startsWith("gsk_") && customKey ? customKey : null) || process.env.GEMINI_API_KEY;
+
+    if (!geminiKey && !groqKey) {
       throw new ApiError("AI Menu Scan is not configured. Contact the Super Admin.", 503);
     }
 
     await consumeScan(decoded.uid, decoded.role === SUPER_ADMIN_ROLE);
 
-    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-      model: "gemini-3.5-flash",
-    });
     const buffer = Buffer.from(await image.arrayBuffer());
-    const result = await model.generateContent([
-      `You are an expert OCR and menu transcription system. Analyze this photo of a restaurant or cafe menu and output strictly valid JSON, without markdown, matching this shape: {"businessName":"string or null","currency":"PHP, USD, EUR, etc.","categories":[{"name":"Category name","items":[{"name":"Item name","description":"Short description","price":120,"isFeatured":false,"tags":["bestseller"]}]}]}. Do not invent items. Use 0 for missing prices.`,
-      {
-        inlineData: {
-          data: buffer.toString("base64"),
-          mimeType: image.type || "image/jpeg",
-        },
-      },
-    ]);
-    let text = result.response.text().trim();
+    let text = "";
+    let usedProvider = "";
+
+    // Prioritize Groq (fast, high-precision OCR with qwen3.8-27b)
+    if (groqKey) {
+      try {
+        text = await scanWithGroq(groqKey, buffer, image.type);
+        usedProvider = "groq";
+      } catch (groqError) {
+        console.warn("[AI Scan] Groq failed, trying Gemini fallback:", (groqError as Error).message);
+        if (geminiKey) {
+          text = await scanWithGemini(geminiKey, buffer, image.type);
+          usedProvider = "gemini";
+        } else {
+          throw groqError;
+        }
+      }
+    } else if (geminiKey) {
+      text = await scanWithGemini(geminiKey, buffer, image.type);
+      usedProvider = "gemini";
+    }
+
+    // Strip markdown code fences if present
     if (text.startsWith("```")) {
       text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
     }
@@ -143,7 +198,8 @@ export async function POST(request: Request) {
       throw new ApiError("AI returned an unreadable menu. Please try a clearer image.", 502);
     }
 
-    return NextResponse.json(toMenuResult(parsed));
+    const result = toMenuResult(parsed);
+    return NextResponse.json({ ...result, _provider: usedProvider });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to scan the menu.";
     const status = error instanceof ApiError ? error.status : 500;
