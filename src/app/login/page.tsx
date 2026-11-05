@@ -159,49 +159,11 @@ function LoginForm() {
           </div>
 
           <h1 className="text-xl font-extrabold text-white">
-            {mode === "signin" ? "Sign In to Your Studio" : "Create Client Account"}
+            Sign In to Your Studio
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
-            {mode === "signin"
-              ? "Access your studio dashboard to manage digital profiles, menus, and client links."
-              : "Register your business to activate your digital presence after placing a card order."}
+            Access your studio dashboard to manage digital profiles, menus, and NFC card links.
           </p>
-        </div>
-
-        {/* Auth Mode Switcher Tabs */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-950 border border-slate-800 mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("signin");
-              setError(null);
-              setSuccessMsg(null);
-            }}
-            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              mode === "signin"
-                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Sign In</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("signup");
-              setError(null);
-              setSuccessMsg(null);
-            }}
-            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              mode === "signup"
-                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Create Account</span>
-          </button>
         </div>
 
         {/* Status Alerts */}
@@ -358,20 +320,20 @@ function LoginForm() {
             disabled={loading}
             className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
           >
-            <span>
-              {loading
-                ? mode === "signin"
-                  ? "Signing in..."
-                  : "Creating account..."
-                : mode === "signin"
-                ? "Sign In to Studio"
-                : "Register for Studio Access"}
-            </span>
+            <span>{loading ? "Signing in..." : "Sign In to Studio"}</span>
           </button>
         </form>
 
+        {/* Client Onboarding Notice */}
+        <div className="mt-5 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 text-center space-y-1">
+          <p className="font-semibold text-slate-300">Need a Tap-Maker client account?</p>
+          <p className="text-slate-500 leading-relaxed">
+            Client accounts are created and configured exclusively by the Super Admin upon ordering your physical NFC cards.
+          </p>
+        </div>
+
         {/* Footer */}
-        <div className="mt-6 text-center text-xs text-slate-500">
+        <div className="mt-5 text-center text-xs text-slate-500">
           <Link href="/" className="hover:text-slate-300 transition-colors">
             ← Back to Homepage
           </Link>

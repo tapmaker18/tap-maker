@@ -40,6 +40,14 @@ export async function POST(request: Request) {
           ? body.aiScansLimit
           : 5;
 
+      const cardTokensLimit =
+        typeof body.cardTokensLimit === "number" &&
+        Number.isInteger(body.cardTokensLimit) &&
+        body.cardTokensLimit >= 1 &&
+        body.cardTokensLimit <= 10000
+          ? body.cardTokensLimit
+          : 1;
+
       if (password.length < 6) {
         return jsonError("Password must be at least 6 characters.");
       }
@@ -56,6 +64,7 @@ export async function POST(request: Request) {
         role: "member",
         aiScansLimit,
         aiScansUsed: 0,
+        cardTokensLimit,
         createdAt: now,
         approvedAt: now,
       };
@@ -84,6 +93,37 @@ export async function POST(request: Request) {
       const updates: Record<string, unknown> = { status };
       if (status === "approved") updates.approvedAt = new Date().toISOString();
       await db.collection("users").doc(uid).update(updates);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "set-card-tokens") {
+      const tokens = body.tokens;
+      if (
+        typeof tokens !== "number" ||
+        !Number.isInteger(tokens) ||
+        tokens < 1 ||
+        tokens > 10000
+      ) {
+        return jsonError("Card tokens must be a whole number between 1 and 10,000.");
+      }
+      await db.collection("users").doc(uid).update({ cardTokensLimit: tokens });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "add-card-tokens") {
+      const count = body.count;
+      if (
+        typeof count !== "number" ||
+        !Number.isInteger(count) ||
+        count < 1 ||
+        count > 10000
+      ) {
+        return jsonError("Card token top-up must be a whole number between 1 and 10,000.");
+      }
+      await db
+        .collection("users")
+        .doc(uid)
+        .update({ cardTokensLimit: FieldValue.increment(count) });
       return NextResponse.json({ ok: true });
     }
 

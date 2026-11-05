@@ -46,6 +46,7 @@ export function createDefaultAdminAccount(uid: string): MemberAccount {
     role: "super_admin",
     aiScansLimit: 999999,
     aiScansUsed: 0,
+    cardTokensLimit: 999999,
     createdAt: new Date().toISOString(),
     approvedAt: new Date().toISOString(),
   };
@@ -180,6 +181,17 @@ export async function addMemberAiScans(uid: string, count: number = 5): Promise<
 }
 
 // ============================================================
+// Manage Card Tokens Quota (Admin)
+// ============================================================
+export async function setMemberCardTokens(uid: string, tokens: number): Promise<void> {
+  await callAdminMembersApi({ action: "set-card-tokens", uid, tokens });
+}
+
+export async function addMemberCardTokens(uid: string, count: number = 1): Promise<void> {
+  await callAdminMembersApi({ action: "add-card-tokens", uid, count });
+}
+
+// ============================================================
 // Delete Member Account
 // ============================================================
 export async function deleteMemberAccount(uid: string): Promise<void> {
@@ -196,6 +208,7 @@ export async function createMemberByAdmin(params: {
   phone?: string;
   orderRef?: string;
   aiScansLimit?: number;
+  cardTokensLimit?: number;
 }): Promise<MemberAccount> {
   const result = await callAdminMembersApi<{ member: MemberAccount }>({
     action: "create",
@@ -205,6 +218,8 @@ export async function createMemberByAdmin(params: {
     phone: params.phone || "",
     orderRef: params.orderRef || "",
     aiScansLimit: params.aiScansLimit || 5,
+    cardTokensLimit: params.cardTokensLimit || 1,
   });
   return result.member;
 }
+

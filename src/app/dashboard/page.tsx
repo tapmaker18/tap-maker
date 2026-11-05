@@ -25,6 +25,8 @@ import {
   addMemberAiScans,
   deleteMemberAccount,
   createMemberByAdmin,
+  setMemberCardTokens,
+  addMemberCardTokens,
 } from "@/lib/userStorage";
 import { MemberAccount, AccountStatus } from "@/lib/types";
 import {
@@ -67,6 +69,9 @@ import {
   Building2,
   Bot,
   UserPlus,
+  CreditCard,
+  Coins,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -110,9 +115,23 @@ export default function DashboardPage() {
     phone: "",
     orderRef: "",
     aiScansLimit: 5,
+    cardTokensLimit: 1,
   });
   const [addAccountLoading, setAddAccountLoading] = useState(false);
   const [addAccountMsg, setAddAccountMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Manage Card Tokens Modal State (Super Admin)
+  const [tokensModalOpen, setTokensModalOpen] = useState(false);
+  const [selectedMemberForTokens, setSelectedMemberForTokens] = useState<MemberAccount | null>(null);
+  const [tokensInput, setTokensInput] = useState<number>(1);
+  const [tokensLoading, setTokensLoading] = useState(false);
+  const [tokensMsg, setTokensMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Member token limits (1 card = 1 profile or menu)
+  const clientTokenLimit = memberAccount?.cardTokensLimit ?? 1;
+  const clientTokensUsed = profiles.length + menus.length;
+  const clientTokensRemaining = Math.max(0, clientTokenLimit - clientTokensUsed);
+  const isTokensExhausted = !isAdmin && clientTokensUsed >= clientTokenLimit;
 
   useEffect(() => {
     if (authLoading) return;
@@ -213,6 +232,7 @@ export default function DashboardPage() {
           phone: "",
           orderRef: "",
           aiScansLimit: 5,
+          cardTokensLimit: 1,
         });
         setAddAccountMsg(null);
       }, 1200);
@@ -223,6 +243,55 @@ export default function DashboardPage() {
       });
     } finally {
       setAddAccountLoading(false);
+    }
+  };
+
+  const handleSaveMemberTokens = async (mode: "set" | "add", count: number) => {
+    if (!selectedMemberForTokens) return;
+    setTokensLoading(true);
+    setTokensMsg(null);
+    try {
+      if (mode === "add") {
+        await addMemberCardTokens(selectedMemberForTokens.uid, count);
+      } else {
+        await setMemberCardTokens(selectedMemberForTokens.uid, count);
+      }
+      setTokensMsg({
+        type: "success",
+        text: `Successfully updated card tokens for ${selectedMemberForTokens.businessName}!`,
+      });
+      await loadMembers();
+      setTimeout(() => {
+        setTokensModalOpen(false);
+        setSelectedMemberForTokens(null);
+        setTokensMsg(null);
+      }, 900);
+    } catch (err: any) {
+      setTokensMsg({
+        type: "error",
+        text: err.message || "Failed to update tokens.",
+      });
+    } finally {
+      setTokensLoading(false);
+    }
+  };
+
+  const handleCreateProfileClick = () => {
+    if (isTokensExhausted) {
+      alert(
+        `Card Token Limit Reached!\n\nYou have used all ${clientTokenLimit} digital slot(s) for your ordered NFC cards (${profiles.length} profiles, ${menus.length} menus).\n\nPlease contact the Super Admin to order additional physical cards or top up your account.`
+      );
+      return;
+    }
+    router.push("/editor/new");
+  };
+
+  const handleCreateMenuClick = () => {
+    if (isTokensExhausted) {
+      alert(
+        `Card Token Limit Reached!\n\nYou have used all ${clientTokenLimit} digital slot(s) for your ordered NFC cards (${profiles.length} profiles, ${menus.length} menus).\n\nPlease contact the Super Admin to order additional physical cards or top up your account.`
+      );
+      return;
     }
   };
 
@@ -389,9 +458,27 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Member Card Token Quota Display (Regular Approved Members) */}
+          {!isAdmin && memberAccount && (
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${
+                isTokensExhausted
+                  ? "bg-rose-500/15 border-rose-500/30 text-rose-300"
+                  : "bg-amber-500/15 border-amber-500/30 text-amber-300"
+              }`}
+              title={`Card Slots Quota: 1 Card = 1 Profile or Menu. You have used ${clientTokensUsed} of ${clientTokenLimit} slots.`}
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+              <span>
+                Cards: <strong className="font-mono text-white">{clientTokensUsed}/{clientTokenLimit}</strong>
+                {isTokensExhausted ? " (Full)" : ` (${clientTokensRemaining} left)`}
+              </span>
+            </div>
+          )}
+
           {/* Member AI Quota Display (Regular Approved Members) */}
           {!isAdmin && memberAccount && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span>AI Scans: {memberAccount.aiScansUsed || 0} / {memberAccount.aiScansLimit || 5}</span>
             </div>
@@ -406,18 +493,26 @@ export default function DashboardPage() {
 
           {activeTab === "profiles" ? (
             <button
-              onClick={() => router.push("/editor/new")}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/30 transition-all active:scale-95"
+              onClick={handleCreateProfileClick}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 ${
+                isTokensExhausted
+                  ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
+                  : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30"
+              }`}
             >
-              <Plus className="w-4 h-4" />
+              {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
               <span>Create Profile</span>
             </button>
           ) : activeTab === "menus" ? (
             <button
-              onClick={() => router.push("/editor/menu/new")}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold shadow-md shadow-orange-600/30 transition-all active:scale-95"
+              onClick={handleCreateMenuClick}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 ${
+                isTokensExhausted
+                  ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
+                  : "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-orange-600/30"
+              }`}
             >
-              <Plus className="w-4 h-4" />
+              {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
               <span>Create Menu</span>
             </button>
           ) : (
@@ -745,7 +840,7 @@ export default function DashboardPage() {
                     : "Try adjusting your search criteria or create a brand new profile."}
                 </p>
                 <button
-                  onClick={() => router.push("/editor/new")}
+                  onClick={handleCreateProfileClick}
                   className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
@@ -991,7 +1086,7 @@ export default function DashboardPage() {
                   Create a digital menu for your restaurant, café, or any food business.
                 </p>
                 <button
-                  onClick={() => router.push("/editor/menu/new")}
+                  onClick={handleCreateMenuClick}
                   className="mt-4 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
@@ -1341,6 +1436,36 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
+                        {/* Card Token Quota Bar */}
+                        <div className="p-3 rounded-2xl bg-slate-950/40 border border-slate-800/60 mb-2.5">
+                          <div className="flex items-center justify-between text-xs mb-1.5">
+                            <span className="text-slate-400 flex items-center gap-1.5 text-[11px] font-medium">
+                              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Card Tokens (1 Card = 1 Profile/Menu)</span>
+                            </span>
+                            <span className="text-xs font-mono font-bold text-white">
+                              {isSuperAdminAccount ? "Unlimited (Admin)" : `${memberProfiles.length + memberMenus.length} / ${m.cardTokensLimit || 1}`}
+                            </span>
+                          </div>
+                          {!isSuperAdminAccount && (
+                            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  (memberProfiles.length + memberMenus.length) >= (m.cardTokensLimit || 1)
+                                    ? "bg-rose-500"
+                                    : "bg-gradient-to-r from-amber-500 to-orange-500"
+                                }`}
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (((memberProfiles.length + memberMenus.length) / (m.cardTokensLimit || 1)) * 100)
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
                         {/* AI Token Quota Bar */}
                         <div className="p-3 rounded-2xl bg-slate-950/40 border border-slate-800/60 mb-4">
                           <div className="flex items-center justify-between text-xs mb-1.5">
@@ -1395,7 +1520,24 @@ export default function DashboardPage() {
                         ) : (
                           <>
                             {/* Approved / Suspended Account Actions */}
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              {/* Manage Card Tokens */}
+                              {!isSuperAdminAccount && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedMemberForTokens(m);
+                                    setTokensInput(m.cardTokensLimit || 1);
+                                    setTokensMsg(null);
+                                    setTokensModalOpen(true);
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Manage or Top-Up Card Tokens for this Client"
+                                >
+                                  <CreditCard className="w-3 h-3 text-amber-400" />
+                                  <span>Manage Cards ({m.cardTokensLimit || 1})</span>
+                                </button>
+                              )}
+
                               {/* Top Up AI Scans */}
                               {!isSuperAdminAccount && (
                                 <button
@@ -1574,23 +1716,49 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  AI Menu Scans Quota
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={addAccountForm.aiScansLimit}
-                  onChange={(e) =>
-                    setAddAccountForm({
-                      ...addAccountForm,
-                      aiScansLimit: parseInt(e.target.value) || 5,
-                    })
-                  }
-                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                    <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                    <span>NFC Card Tokens *</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    required
+                    value={addAccountForm.cardTokensLimit}
+                    onChange={(e) =>
+                      setAddAccountForm({
+                        ...addAccountForm,
+                        cardTokensLimit: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">1 Card = 1 Profile/Menu</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>AI Scans Quota</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={addAccountForm.aiScansLimit}
+                    onChange={(e) =>
+                      setAddAccountForm({
+                        ...addAccountForm,
+                        aiScansLimit: parseInt(e.target.value) || 5,
+                      })
+                    }
+                    className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Free OCR scans</p>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -1610,6 +1778,111 @@ export default function DashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Card Tokens Modal (Super Admin) */}
+      {tokensModalOpen && selectedMemberForTokens && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Manage Card Tokens</h3>
+                  <p className="text-[11px] text-slate-400">{selectedMemberForTokens.businessName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setTokensModalOpen(false);
+                  setSelectedMemberForTokens(null);
+                  setTokensMsg(null);
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {tokensMsg && (
+              <div
+                className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                  tokensMsg.type === "success"
+                    ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                    : "bg-rose-500/10 border border-rose-500/30 text-rose-400"
+                }`}
+              >
+                {tokensMsg.type === "success" ? (
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                ) : (
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span>{tokensMsg.text}</span>
+              </div>
+            )}
+
+            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Current Total Cards/Tokens:</span>
+                <span className="font-mono font-bold text-amber-300 text-sm">
+                  {selectedMemberForTokens.cardTokensLimit || 1} Cards
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500">Slot Cost:</span>
+                <span className="text-slate-300 font-semibold">1 Card = 1 Profile or 1 Menu</span>
+              </div>
+            </div>
+
+            {/* Quick Top-Up Cards (When client reorders cards) */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                Quick Top-Up (Client Re-Ordered Cards)
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 2, 5, 10].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    disabled={tokensLoading}
+                    onClick={() => handleSaveMemberTokens("add", num)}
+                    className="py-2.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>+{num} Card{num > 1 ? "s" : ""}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Direct Total Adjustment */}
+            <div className="pt-2 border-t border-slate-800/80 space-y-2">
+              <label className="block text-xs font-semibold text-slate-300">
+                Or Set Exact Total Card Allowance
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={10000}
+                  value={tokensInput}
+                  onChange={(e) => setTokensInput(parseInt(e.target.value) || 1)}
+                  className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                />
+                <button
+                  type="button"
+                  disabled={tokensLoading}
+                  onClick={() => handleSaveMemberTokens("set", tokensInput)}
+                  className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/30 active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {tokensLoading ? "Saving..." : "Update Total"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -206,6 +206,7 @@ export interface MemberAccount {
   role: UserRole;
   aiScansLimit: number;
   aiScansUsed: number;
+  cardTokensLimit?: number;
   createdAt: string;
   approvedAt?: string | null;
   lastLoginAt?: string | null;

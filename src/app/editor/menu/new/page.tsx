@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { createEmptyMenu, saveMenu, isMenuSlugAvailable } from "@/lib/menuStorage";
+import { createEmptyMenu, saveMenu, isMenuSlugAvailable, getMenus } from "@/lib/menuStorage";
+import { getProfiles } from "@/lib/storage";
 import { UtensilsCrossed, Lock, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function NewMenuPage() {
   const router = useRouter();
-  const { user, loading: authLoading, isPending, isSuspended } = useAuth();
+  const { user, loading: authLoading, isPending, isSuspended, isAdmin, memberAccount } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +28,22 @@ export default function NewMenuPage() {
 
     async function initializeMenu() {
       try {
+        if (!isAdmin && user) {
+          const [userProfiles, userMenus] = await Promise.all([
+            getProfiles(user.uid, false),
+            getMenus(user.uid, false),
+          ]);
+          const limit = memberAccount?.cardTokensLimit ?? 1;
+          const used = userProfiles.length + userMenus.length;
+          if (used >= limit) {
+            alert(
+              `Card Token Limit Reached!\n\nYou have used all ${limit} digital slot(s) for your ordered cards (${userProfiles.length} profiles, ${userMenus.length} menus).\nPlease contact the Super Admin to order more cards.`
+            );
+            router.push("/dashboard");
+            return;
+          }
+        }
+
         const timestamp = Date.now();
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         let candidateSlug = `cafe-${randomNum}`;
