@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     await consumeScan(decoded.uid, decoded.role === SUPER_ADMIN_ROLE);
 
     const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
     });
     const buffer = Buffer.from(await image.arrayBuffer());
     const result = await model.generateContent([
