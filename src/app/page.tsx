@@ -334,7 +334,7 @@ export default function HomePage() {
                 </div>
                 <h4 className="text-xs font-bold text-white">AI Printed Menu Scanner</h4>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Have a paper menu or flyer? Snap a photo and Google Gemini AI automatically extracts sections, items, prices, and descriptions in seconds.
+                  Have a paper menu or flyer? Snap a photo and our Smart AI automatically extracts sections, items, prices, and descriptions in seconds.
                 </p>
               </div>
 
@@ -558,7 +558,7 @@ export default function HomePage() {
               {
                 icon: Sparkles,
                 title: "AI Printed Menu Scanner",
-                desc: "Powered by Google Gemini: photograph your printed food menu to automatically extract all dishes and prices.",
+                desc: "Powered by Smart AI: photograph your printed food menu to automatically extract all dishes and prices.",
               },
               {
                 icon: UtensilsCrossed,

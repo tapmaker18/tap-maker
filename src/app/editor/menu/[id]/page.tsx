@@ -1436,7 +1436,7 @@ export default function MenuEditorPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">AI Menu Photo Scanner</h3>
-                  <p className="text-[11px] text-slate-400">Powered by AI Vision (Groq / Gemini)</p>
+                  <p className="text-[11px] text-slate-400">Powered by AI Vision</p>
                 </div>
               </div>
               <button
@@ -1540,7 +1540,7 @@ export default function MenuEditorPage() {
                 {aiScanning ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Gemini is reading your menu... (Takes 3-6s)</span>
+                    <span>AI is scanning your menu... (Takes 3-6s)</span>
                   </>
                 ) : (
                   <>
