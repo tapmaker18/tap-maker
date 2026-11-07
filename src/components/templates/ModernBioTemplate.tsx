@@ -69,11 +69,17 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         />
       )}
 
-      <div className="w-full max-w-md flex flex-col items-center gap-6 my-auto py-6 animate-fade-slide-up relative z-10">
+      <div
+        className="w-full max-w-md flex flex-col items-center gap-6 my-auto py-7 px-5 sm:px-7 rounded-3xl border shadow-2xl backdrop-blur-xl animate-fade-slide-up relative z-10 tmaker-card"
+        style={{
+          backgroundColor: themeSettings.cardBg || "rgba(255, 255, 255, 0.04)",
+          borderColor: themeSettings.borderColor || "rgba(255, 255, 255, 0.12)",
+        }}
+      >
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
-            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-md z-20 animate-fade-in tmaker-badge"
+            className="text-[10px] font-extrabold uppercase px-3.5 py-1 rounded-full shadow-lg z-20 animate-fade-in tmaker-badge"
             style={{
               backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
               color: "#ffffff",
@@ -84,7 +90,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         )}
 
         {/* Profile Card Header */}
-        <div className="flex flex-col items-center text-center gap-3">
+        <div className="flex flex-col items-center text-center gap-3 w-full">
           <div
             className={`relative group transition-transform duration-300 tmaker-avatar-wrap ${
               profile.avatarUrl && profile.avatarUrl !== "/image.png"
@@ -99,7 +105,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
             }}
           >
             <div
-              className={`absolute -inset-1 ${getAvatarRadius()} opacity-50 blur-sm z-0 pointer-events-none`}
+              className={`absolute -inset-1.5 ${getAvatarRadius()} opacity-60 blur-md z-0 pointer-events-none`}
               style={{ backgroundColor: color1 }}
             />
             <div className="relative z-10">
@@ -107,7 +113,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                 name={profile.name}
                 avatarUrl={profile.avatarUrl}
                 shapeClass={getAvatarRadius()}
-                className="w-24 h-24"
+                className="w-24 h-24 sm:w-28 sm:h-28"
                 accentColor={color1}
                 secondaryAccent={color2}
               />
@@ -115,7 +121,10 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           <div className="flex items-center justify-center gap-1.5 mt-1 px-4 text-center">
-            <h1 className={`font-bold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}>
+            <h1
+              className={`font-extrabold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}
+              style={{ color: themeSettings.textColor || "#ffffff" }}
+            >
               {profile.name}
               {layoutSettings.showVerificationBadge && profile.verified && (
                 <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/20 inline-block ml-1.5 align-middle flex-shrink-0" />
@@ -124,15 +133,22 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           {layoutSettings.showSubtitlePill && profile.subtitle && (
-            <p className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 opacity-80 tmaker-subtitle">
+            <p
+              className="text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border shadow-sm backdrop-blur-md tmaker-subtitle"
+              style={{
+                backgroundColor: (themeSettings.accentColor || color1) + "25",
+                color: themeSettings.accentColor || color1,
+                borderColor: (themeSettings.accentColor || color1) + "50",
+              }}
+            >
               {profile.subtitle}
             </p>
           )}
 
           {profile.bio && (
             <p
-              className="text-xs sm:text-sm font-normal max-w-xs leading-relaxed tmaker-bio"
-              style={{ color: themeSettings.textSecondaryColor }}
+              className="text-xs sm:text-sm font-medium max-w-xs leading-relaxed tmaker-bio"
+              style={{ color: themeSettings.textSecondaryColor || "#cbd5e1" }}
             >
               {profile.bio}
             </p>
@@ -140,29 +156,35 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         </div>
 
         {/* Links Stack */}
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-2.5">
           {activeLinks.map((link) => (
             <a
               key={link.id}
               href={isPreview ? undefined : link.url}
               target={isPreview ? "_self" : "_blank"}
               rel="noopener noreferrer"
-              className={`group flex items-center justify-between p-3.5 border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] tmaker-link-item ${getButtonRadius()}`}
+              className={`group flex items-center justify-between p-3.5 border transition-all duration-200 hover:shadow-lg hover:translate-y-[-2px] tmaker-link-item ${getButtonRadius()}`}
               onClick={() => {
                 if (!isPreview && onLinkClick) {
                   onLinkClick(link.id, link.title);
                 }
               }}
               style={{
-                backgroundColor: themeSettings.cardBg,
+                backgroundColor: link.isHighlighted
+                  ? (themeSettings.accentColor || color1) + "20"
+                  : themeSettings.cardBg || "rgba(255, 255, 255, 0.05)",
                 borderColor: link.isHighlighted
-                  ? themeSettings.accentColor
-                  : themeSettings.borderColor,
+                  ? themeSettings.accentColor || color1
+                  : themeSettings.borderColor || "rgba(255, 255, 255, 0.12)",
+                backdropFilter: "blur(12px)",
               }}
             >
               <div className="flex items-center gap-3">
                 <IconMapper platform={link.platform} className="w-6 h-6 flex-shrink-0" />
-                <span className="font-semibold text-sm tracking-tight">
+                <span
+                  className="font-semibold text-sm tracking-tight"
+                  style={{ color: themeSettings.textColor || "#ffffff" }}
+                >
                   {link.title}
                 </span>
               </div>
@@ -170,8 +192,8 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
               <div className="flex items-center gap-2">
                 {link.badge && (
                   <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                    style={{ backgroundColor: themeSettings.accentColor }}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-sm"
+                    style={{ backgroundColor: themeSettings.accentColor || color1 }}
                   >
                     {link.badge}
                   </span>

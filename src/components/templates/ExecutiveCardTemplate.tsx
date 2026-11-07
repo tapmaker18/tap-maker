@@ -158,7 +158,10 @@ END:VCARD`;
             {/* Name & Title */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-1.5">
-                <h1 className={`font-bold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}>
+                <h1
+                  className={`font-bold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}
+                  style={{ color: themeSettings.textColor || "#ffffff" }}
+                >
                   {profile.name}
                   {layoutSettings.showVerificationBadge && profile.verified && (
                     <CheckCircle2
@@ -192,8 +195,8 @@ END:VCARD`;
             <p
               className="text-xs leading-relaxed mt-4 pt-3 border-t font-normal tmaker-bio"
               style={{
-                borderColor: themeSettings.borderColor,
-                color: themeSettings.textSecondaryColor,
+                borderColor: themeSettings.borderColor || "rgba(255, 255, 255, 0.1)",
+                color: themeSettings.textSecondaryColor || "#cbd5e1",
               }}
             >
               {profile.bio}

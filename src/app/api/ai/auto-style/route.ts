@@ -17,7 +17,7 @@ class ApiError extends Error {
 
 const AUTO_STYLE_PROMPT = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
 Analyze this image (which may be a company logo, physical storefront, restaurant ambiance, signature dish, printed menu, or business card).
-DO NOT JUST PICK COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
+DO NOT JUST PICK FLAT COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
 
 Output strictly valid JSON with no markdown wrapping or fences, matching this exact shape:
 {
@@ -26,47 +26,49 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   "vibeExplanation": "1-2 sentences explaining why this visual design, lighting, and mood embody this brand",
   "tagline": "A punchy, attractive tagline or brand slogan",
   "themeMode": "dark",
-  "primaryColor": "#8b5cf6",
-  "secondaryAccent": "#06b6d4",
-  "bgPrimary": "#090d16",
-  "bgSecondary": "#111827",
-  "cardBg": "#1e293b",
-  "borderColor": "#334155",
-  "textColor": "#f8fafc",
-  "textSecondaryColor": "#94a3b8",
+  "primaryColor": "#f59e0b",
+  "secondaryAccent": "#d97706",
+  "bgPrimary": "#0e0906",
+  "bgSecondary": "#1a120c",
+  "cardBg": "rgba(30, 20, 14, 0.8)",
+  "borderColor": "rgba(245, 158, 11, 0.25)",
+  "textColor": "#ffffff",
+  "textSecondaryColor": "#cbd5e1",
   "fontFamily": "Plus Jakarta Sans",
   "buttonRadius": "rounded",
   "suggestedTemplate": "executive-card",
   "suggestedMenuCardStyle": "glass",
   "imageFilter": "vibrant",
-  "bgPattern": "none",
+  "bgPattern": "mesh",
   "customCss": "/* Scoped custom CSS designed specifically for this brand */"
 }
 
 CUSTOM CSS DESIGN INSTRUCTIONS:
-Author 8 to 25 lines of elegant, creative, high-impact CSS rules in "customCss".
+Author 10 to 25 lines of elegant, creative, high-impact CSS rules in "customCss".
 Make sure every property has !important so it overrides framework defaults cleanly.
 Use the following target classes:
-- .tmaker-profile-root, .tmaker-menu-root : Page canvas (give it unique radial/mesh background gradient, ambient lighting or subtle atmospheric depth)
-- .tmaker-card, .tmaker-menu-item-card : Main card containers (give them distinctive borders, glassmorphism backdrop-blur, custom border-radius, box-shadows, or subtle ambient glow)
-- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (custom border, glow ring, or hover transition)
-- .tmaker-name, .tmaker-menu-title : Brand/person title (letter-spacing, text-shadow, gradient text clipping, or font-weight)
-- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline
-- .tmaker-link-item : Profile link buttons (custom gradients, soft hover lift, glow on hover, border accent)
+- .tmaker-profile-root, .tmaker-menu-root : Page canvas (give it unique radial ambient lighting spotlight at the top reflecting the primary color, e.g. radial-gradient(circle at 50% 12%, [primaryColor]25 0%, transparent 60%), [bgPrimary] !important)
+- .tmaker-card, .tmaker-menu-item-card : Main card containers (give them distinctive borders, glassmorphism backdrop-blur: 20px, custom border-radius: 28px, deep box-shadows with subtle primary color glow)
+- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (custom box-shadow glow ring with primary color, smooth hover scale)
+- .tmaker-name, .tmaker-menu-title : Brand/person title (pure white #ffffff, letter-spacing: -0.02em, subtle text-shadow with primary color glow)
+- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline (pill with subtle primary color background tint, glowing border, crisp readable text)
+- .tmaker-bio : Bio text (crisp readable light color #e2e8f0, never dark or muddy)
+- .tmaker-link-item : Profile link buttons (subtle glass background, border highlight, smooth hover translateY(-3px) and glow on hover)
 - .tmaker-action-btn : Primary action buttons (Save Contact, Call store)
 - .tmaker-badge, .tmaker-menu-badge : Custom badge or ribbon (metallic gradient, neon tag, or frosted pill)
 - .tmaker-menu-category-btn : Menu category navigation pills
 - .tmaker-menu-item-price : Dish price tag styling
 
-Important rules:
-1. Ensure high WCAG contrast between textColor and bgPrimary / cardBg.
-2. In "customCss", write ONLY pure CSS rules. NEVER include <style> tags or HTML.
-3. "fontFamily" must be one of: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", "Playfair Display".
-4. "suggestedTemplate" must be one of: "executive-card", "cyber-glow", "modern-bio".
-5. "suggestedMenuCardStyle" must be one of: "clean", "glass", "bordered".
-6. "buttonRadius" must be one of: "sharp", "rounded", "pill".
-7. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
-8. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
+CRITICAL CONTRAST & READABILITY RULES:
+1. textColor MUST ALWAYS be #ffffff or #f8fafc on dark themeMode. NEVER generate dark brown, dark gray, or low-contrast text.
+2. textSecondaryColor MUST ALWAYS be light and easily readable (#cbd5e1 or #e2e8f0). NEVER generate dark gray or dark brown on dark backgrounds.
+3. In "customCss", write ONLY pure CSS rules. NEVER include <style> tags or HTML.
+4. "fontFamily" must be one of: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", "Playfair Display".
+5. "suggestedTemplate" must be one of: "executive-card", "cyber-glow", "modern-bio".
+6. "suggestedMenuCardStyle" must be one of: "clean", "glass", "bordered".
+7. "buttonRadius" must be one of: "sharp", "rounded", "pill".
+8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
+9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
 async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
   if (isAdmin) return;
@@ -208,6 +210,29 @@ export async function POST(request: Request) {
       parsed = JSON.parse(cleaned);
     } catch {
       throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
+    }
+
+    // Safety auto-correction for contrast & readability:
+    // If dark mode is selected, ensure textColor and textSecondaryColor are never dark or muddy
+    const isDarkHex = (hex: unknown): boolean => {
+      if (typeof hex !== "string" || !hex.startsWith("#")) return false;
+      const clean = hex.replace("#", "");
+      const num = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+      if (isNaN(num)) return false;
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      return lum < 140; // below 140 is too dark for dark backgrounds
+    };
+
+    if (parsed.themeMode === "dark" || !parsed.themeMode) {
+      if (!parsed.textColor || isDarkHex(parsed.textColor)) {
+        parsed.textColor = "#ffffff";
+      }
+      if (!parsed.textSecondaryColor || isDarkHex(parsed.textSecondaryColor)) {
+        parsed.textSecondaryColor = "#cbd5e1";
+      }
     }
 
     return NextResponse.json(parsed);

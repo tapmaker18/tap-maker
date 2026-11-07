@@ -153,7 +153,13 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
       )}
 
       {/* Main Responsive Profile Container */}
-      <main className="relative z-10 w-full max-w-[460px] px-5 py-10 flex flex-col items-center gap-7 animate-fade-slide-up">
+      <main
+        className="relative z-10 w-full max-w-[460px] px-5 py-8 rounded-3xl border shadow-2xl backdrop-blur-xl flex flex-col items-center gap-7 animate-fade-slide-up tmaker-card"
+        style={{
+          backgroundColor: themeSettings.cardBg || "rgba(255, 255, 255, 0.04)",
+          borderColor: themeSettings.borderColor || "rgba(255, 255, 255, 0.12)",
+        }}
+      >
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
@@ -205,7 +211,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           <div className="flex items-center justify-center gap-2 mt-2 px-4 text-center">
             <h1
               className={`font-extrabold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}
-              style={{ color: themeSettings.textColor }}
+              style={{ color: themeSettings.textColor || "#ffffff" }}
             >
               {profile.name}
               {layoutSettings.showVerificationBadge && profile.verified && (
@@ -220,11 +226,11 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           {/* Subtitle Pill Badge */}
           {layoutSettings.showSubtitlePill && profile.subtitle && (
             <div
-              className="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide border shadow-sm backdrop-blur-md tmaker-subtitle"
+              className="px-4 py-1.5 rounded-full text-xs font-bold tracking-wide border shadow-sm backdrop-blur-md tmaker-subtitle"
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                borderColor: themeSettings.borderColor,
-                color: themeSettings.textSecondaryColor,
+                backgroundColor: (themeSettings.accentColor || color1) + "25",
+                borderColor: (themeSettings.secondaryAccent || color2) + "50",
+                color: themeSettings.secondaryAccent || themeSettings.accentColor || "#38bdf8",
               }}
             >
               {profile.subtitle}
@@ -235,7 +241,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           {profile.bio && (
             <p
               className="text-sm font-medium leading-relaxed max-w-sm mt-1 tmaker-bio"
-              style={{ color: themeSettings.textSecondaryColor }}
+              style={{ color: themeSettings.textSecondaryColor || "#cbd5e1" }}
             >
               {profile.bio}
             </p>
