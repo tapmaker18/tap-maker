@@ -121,23 +121,37 @@ async function scanWithGroq(apiKey: string, buffer: Buffer, mimeType: string): P
   const base64Image = buffer.toString("base64");
   const dataUrl = `data:${mimeType || "image/jpeg"};base64,${base64Image}`;
 
-  const completion = await groq.chat.completions.create({
-    model: "qwen/qwen3.8-27b",
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: AUTO_STYLE_PROMPT },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      },
-    ],
-    temperature: 0.2,
-    max_tokens: 2048,
-    response_format: { type: "json_object" },
-  });
+  // Try llama-3.2-11b-vision-preview first (higher limits), then qwen
+  const models = ["llama-3.2-11b-vision-preview", "qwen/qwen3.8-27b"];
+  let lastErr: unknown = null;
 
-  return completion.choices[0]?.message?.content?.trim() ?? "";
+  for (const model of models) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: AUTO_STYLE_PROMPT },
+              { type: "image_url", image_url: { url: dataUrl } },
+            ],
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 750, // Keep within Groq on-demand OTPM limit of 1000
+        response_format: { type: "json_object" },
+      });
+
+      const text = completion.choices[0]?.message?.content?.trim();
+      if (text) return text;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`Groq model ${model} auto-style failed, trying fallback:`, err);
+    }
+  }
+
+  throw lastErr || new Error("Groq vision analysis failed.");
 }
 
 export async function POST(request: Request) {
