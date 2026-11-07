@@ -341,3 +341,39 @@ Dahil nakadepende ang bawat profile sa specific branding/colors ng company o cli
   - **Studio Editors Thumb Accessibility**: Sticky bottom mobile action toolbar (Save, Publish, Preview), 16px iOS auto-zoom prevention, and full-bleed borderless mobile preview.
   - **Public Rendering Mobile Polish**: iOS safe-area insets (`env(safe-area-inset-bottom)`), sticky category auto-scroller for digital menus, and 44x44px touch targets.
   - Detailed technical blueprint preserved in `MOBILE_VIEW_PLAN.md`.
+- **Phase 12: Multimodal AI Theme & Template Auto-Designer ("AI Auto-Stylist") for Profiles & Menus**
+  - **Overview**: Transforming any single uploaded photo (storefront, logo, physical signage, packaging, or printed menu) into a production-grade, customized theme & template design powered by Gemini 1.5 Flash Vision.
+  - **Dual Scope (Profiles & Menus)**:
+    - **For Digital Menus (`/editor/menu/[id]`)**: Combined OCR + Theme Generation in a single scan. Extracts dishes/prices AND automatically designs the restaurant's visual theme (palette, typography, layout style, button rounding, dark/light mood).
+    - **For Digital Profiles & Business Passes (`/editor/[id]`)**: "Magic AI Rebrand" modal. Upload a company logo or store photo, and AI generates brand colors (primary, secondary, background, cards), chooses the best template (`executive-card`, `cyber-glow`, or `modern-bio`), and writes a matching bio/tagline.
+  - **Vision Extraction Architecture**:
+    - **Color Palette Analyzer**: Multimodal model detects dominant brand hue, complementary accent, and optimal high-contrast background (WCAG AA compliant).
+    - **Aesthetic Vibe Classification**: Classifies mood into presets (e.g. *Artisan Cafe*, *Luxury Corporate*, *Cyberpunk Nightclub*, *Clean Health Bistro*, *Minimalist Studio*).
+    - **Font & Button Styling**: Recommends typography pairing (`fontFamily`) and shape psychology (`buttonRadius`: sharp, rounded, or pill).
+    - **Template Auto-Recommendation**: Automatically switches the template to the one that best complements the uploaded visual identity.
+  - **Interactive User Experience (1-Click Preview & Apply)**:
+    - Modal shows visual color swatch preview with generated mood explanation.
+    - User can click **"Apply AI Theme"** or tweak individual colors in Theme Studio.
+    - Quota-friendly: Consumes from the existing member AI Scan quota without requiring separate token systems.
+- **Phase 13: Pro Studio Visual Editor ("Canva / Photo-Editor-Style Design Suite")**
+  - **Overview**: Upgrading the template customizer into a full visual design studio with intuitive, photo-editor-inspired controls (sliders, filters, effects, frames, overlays, and typography tools) accessible directly inside both Profile and Menu editors.
+  - **1. Photo & Image Adjustment Suite (Live Filters & Tuning)**:
+    - **Color & Light Sliders**: Real-time Brightness, Contrast, Saturation, and Warmth controls for uploaded avatars, covers, and dish photos.
+    - **1-Click Photo Filter Presets**: *Vibrant*, *Warm Cafe*, *Noir / Black & White*, *Cyber Glow*, *Vintage Film*, *Cool Clean*.
+    - **Image Framing & Borders**: Border width slider, gradient border stroke, inner/outer shadow, and neon glow radius/spread.
+    - **Aspect Ratio & Crop Presets**: 1:1 Square, 4:5 Portrait, 16:9 Banner, and Circle mask.
+  - **2. Background & Atmosphere Studio**:
+    - **Glassmorphism / Frosted Glass**: Opacity slider, background blur radius (`backdrop-blur-md/lg/xl`), and glass border luminescence.
+    - **Pattern Overlays**: Subtle texture generators (Film grain noise, Dot matrix grid, Geometric diagonal stripes, Modern isometric mesh).
+    - **Multi-Stop Mesh Gradients**: Interactive gradient angle wheel (0°–360°), radial ambient spots, and multi-color glow orbs.
+    - **Custom Wallpaper Overlay**: Background wallpaper dimmer, vignette intensity, and tint overlay.
+  - **3. Typography & Text Styling Controls**:
+    - **Expanded Google Font Library**: Display, Serif, Sans-Serif, and Monospace pairings (e.g. *Outfit*, *Plus Jakarta Sans*, *Playfair Display*, *Space Grotesk*, *Bebas Neue*).
+    - **Text Effects**: Letter-spacing (tracking), line-height, text drop-shadow, ambient neon text glow, and gradient text masking.
+  - **4. Stickers, Badges & Decorative Elements**:
+    - **Custom Badge Builder**: Corner ribbon or floating tag ("VIP", "Bestseller", "New", "Halal", "Chef's Special", "Sale 20% Off").
+    - **Divider Styles**: Wave divider, zigzag, gradient fade line, neon pulse line, or clean minimalist hairline.
+  - **5. Dockable "Photo Editor" Floating Toolstrip**:
+    - A streamlined top/side toolbar above the phone preview:
+      `[🎨 Background] [✨ Effects & Filters] [🔤 Typography] [🔲 Frames & Borders] [🏷️ Badges] [🪄 AI Auto-Style]`
+    - Instant live preview reactivity with zero lag (CSS variable-driven, hardware-accelerated transforms).
