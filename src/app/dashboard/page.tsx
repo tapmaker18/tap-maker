@@ -976,7 +976,7 @@ export default function DashboardPage() {
                             />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <h3 className="text-sm font-bold text-white truncate">
+                                <h3 className="text-sm font-bold text-white break-words line-clamp-2 leading-tight">
                                   {item.name}
                                 </h3>
                                 {item.verified && (

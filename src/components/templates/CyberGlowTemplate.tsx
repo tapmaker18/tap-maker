@@ -57,6 +57,13 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
     return "rounded-2xl";
   };
 
+  const getNameSizeClass = (name: string = "") => {
+    const len = name.trim().length;
+    if (len > 28) return "text-xl sm:text-2xl";
+    if (len > 18) return "text-2xl sm:text-3xl";
+    return "text-2xl sm:text-4xl";
+  };
+
   const color1 = themeSettings.color1 || themeSettings.accentColor || "#a37bf7";
   const color2 = themeSettings.color2 || themeSettings.secondaryAccent || "#1bdfcf";
   const additional = themeSettings.additionalColors || [];
@@ -161,19 +168,19 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           {/* Business / Artist Name */}
-          <div className="flex items-center justify-center gap-2 mt-2">
+          <div className="flex items-center justify-center gap-2 mt-2 px-4 text-center">
             <h1
-              className="text-2xl sm:text-3xl font-extrabold tracking-tight"
+              className={`font-extrabold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}
               style={{ color: themeSettings.textColor }}
             >
               {profile.name}
+              {layoutSettings.showVerificationBadge && profile.verified && (
+                <CheckCircle2
+                  className="w-5 h-5 inline-block ml-1.5 align-middle flex-shrink-0"
+                  style={{ color: themeSettings.secondaryAccent }}
+                />
+              )}
             </h1>
-            {layoutSettings.showVerificationBadge && profile.verified && (
-              <CheckCircle2
-                className="w-5 h-5 flex-shrink-0"
-                style={{ color: themeSettings.secondaryAccent }}
-              />
-            )}
           </div>
 
           {/* Subtitle Pill Badge */}

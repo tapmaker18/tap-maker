@@ -62,6 +62,13 @@ END:VCARD`;
     return "rounded-2xl";
   };
 
+  const getNameSizeClass = (name: string = "") => {
+    const len = name.trim().length;
+    if (len > 28) return "text-sm sm:text-base";
+    if (len > 18) return "text-base sm:text-lg";
+    return "text-lg sm:text-xl";
+  };
+
   return (
     <div
       className="relative min-h-screen w-full flex flex-col items-center justify-start p-4 sm:p-6"
@@ -105,7 +112,7 @@ END:VCARD`;
                 name={profile.name}
                 avatarUrl={profile.avatarUrl}
                 shapeClass={getAvatarRadius()}
-                className="w-20 h-20"
+                className="w-16 h-16 sm:w-20 sm:h-20"
                 accentColor={color1}
                 secondaryAccent={color2}
               />
@@ -113,21 +120,21 @@ END:VCARD`;
 
             {/* Name & Title */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xl font-bold tracking-tight truncate">
+              <div className="flex items-start gap-1.5">
+                <h1 className={`font-bold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}>
                   {profile.name}
+                  {layoutSettings.showVerificationBadge && profile.verified && (
+                    <CheckCircle2
+                      className="w-4 h-4 inline-block ml-1.5 align-middle flex-shrink-0"
+                      style={{ color: themeSettings.accentColor }}
+                    />
+                  )}
                 </h1>
-                {layoutSettings.showVerificationBadge && profile.verified && (
-                  <CheckCircle2
-                    className="w-4 h-4 flex-shrink-0"
-                    style={{ color: themeSettings.accentColor }}
-                  />
-                )}
               </div>
 
               {profile.subtitle && (
                 <p
-                  className="text-xs font-semibold mt-0.5"
+                  className="text-xs font-semibold mt-1 break-words leading-snug"
                   style={{ color: themeSettings.accentColor }}
                 >
                   {profile.subtitle}
@@ -136,8 +143,8 @@ END:VCARD`;
 
               {contactInfo.company && (
                 <p className="text-xs flex items-center gap-1 mt-1 opacity-70">
-                  <Building className="w-3.5 h-3.5" />
-                  <span className="truncate">{contactInfo.company}</span>
+                  <Building className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="break-words line-clamp-1">{contactInfo.company}</span>
                 </p>
               )}
             </div>

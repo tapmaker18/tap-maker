@@ -33,6 +33,13 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
     return "rounded-2xl";
   };
 
+  const getNameSizeClass = (name: string = "") => {
+    const len = name.trim().length;
+    if (len > 28) return "text-lg sm:text-xl";
+    if (len > 18) return "text-xl sm:text-2xl";
+    return "text-2xl sm:text-3xl";
+  };
+
   return (
     <div
       className="relative min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8"
@@ -73,13 +80,13 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 mt-1">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+          <div className="flex items-center justify-center gap-1.5 mt-1 px-4 text-center">
+            <h1 className={`font-bold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}>
               {profile.name}
+              {layoutSettings.showVerificationBadge && profile.verified && (
+                <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/20 inline-block ml-1.5 align-middle flex-shrink-0" />
+              )}
             </h1>
-            {layoutSettings.showVerificationBadge && profile.verified && (
-              <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/20" />
-            )}
           </div>
 
           {layoutSettings.showSubtitlePill && profile.subtitle && (
