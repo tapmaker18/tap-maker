@@ -6,6 +6,10 @@ import { IconMapper } from "@/components/ui/IconMapper";
 import { Lightbox } from "@/components/ui/Lightbox";
 import { LetterAvatar } from "@/components/ui/LetterAvatar";
 import { ChevronRight, CheckCircle2 } from "lucide-react";
+import {
+  getImageFilterStyle,
+  getBgPatternStyle,
+} from "@/lib/visualEffects";
 
 interface TemplateProps {
   profile: Profile;
@@ -86,6 +90,13 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         fontFamily: themeSettings.fontFamily,
       }}
     >
+      {getBgPatternStyle(themeSettings.bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          style={getBgPatternStyle(themeSettings.bgPattern) || undefined}
+        />
+      )}
+
       {/* Dynamic Ambient Radial Glow Background */}
       {themeSettings.enableGlow && (
         <div className="absolute inset-0 pointer-events-none z-0 filter blur-[40px] opacity-70 overflow-hidden">
@@ -134,12 +145,26 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
 
       {/* Main Responsive Profile Container */}
       <main className="relative z-10 w-full max-w-[460px] px-5 py-10 flex flex-col items-center gap-7 animate-fade-slide-up">
+        {/* Floating Custom Badge */}
+        {themeSettings.badgeText && (
+          <span
+            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-lg z-20 animate-fade-in"
+            style={{
+              backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
+              color: "#ffffff",
+            }}
+          >
+            {themeSettings.badgeText}
+          </span>
+        )}
+
         {/* Profile Header */}
         <header className="flex flex-col items-center text-center gap-3 w-full">
           <div
             className={`relative group ${
               profile.avatarUrl && profile.avatarUrl !== "/image.png" ? "cursor-pointer" : ""
             }`}
+            style={getImageFilterStyle(themeSettings)}
             onClick={() => {
               if (profile.avatarUrl && profile.avatarUrl !== "/image.png") {
                 setLightboxOpen(true);

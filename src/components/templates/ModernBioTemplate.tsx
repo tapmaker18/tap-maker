@@ -6,6 +6,10 @@ import { IconMapper } from "@/components/ui/IconMapper";
 import { Lightbox } from "@/components/ui/Lightbox";
 import { LetterAvatar } from "@/components/ui/LetterAvatar";
 import { ChevronRight, CheckCircle, ExternalLink } from "lucide-react";
+import {
+  getImageFilterStyle,
+  getBgPatternStyle,
+} from "@/lib/visualEffects";
 
 interface TemplateProps {
   profile: Profile;
@@ -49,7 +53,27 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         fontFamily: themeSettings.fontFamily,
       }}
     >
-      <div className="w-full max-w-md flex flex-col items-center gap-6 my-auto py-6 animate-fade-slide-up">
+      {getBgPatternStyle(themeSettings.bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          style={getBgPatternStyle(themeSettings.bgPattern) || undefined}
+        />
+      )}
+
+      <div className="w-full max-w-md flex flex-col items-center gap-6 my-auto py-6 animate-fade-slide-up relative z-10">
+        {/* Floating Custom Badge */}
+        {themeSettings.badgeText && (
+          <span
+            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-md z-20 animate-fade-in"
+            style={{
+              backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
+              color: "#ffffff",
+            }}
+          >
+            {themeSettings.badgeText}
+          </span>
+        )}
+
         {/* Profile Card Header */}
         <div className="flex flex-col items-center text-center gap-3">
           <div
@@ -58,6 +82,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                 ? "cursor-pointer hover:scale-105"
                 : ""
             }`}
+            style={getImageFilterStyle(themeSettings)}
             onClick={() => {
               if (profile.avatarUrl && profile.avatarUrl !== "/image.png") {
                 setLightboxOpen(true);

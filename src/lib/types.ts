@@ -5,6 +5,9 @@ export type TemplateId = "cyber-glow" | "modern-bio" | "executive-card";
 export type AvatarShape = "circle" | "rounded-square" | "squircle";
 export type ButtonRadius = "sharp" | "rounded" | "pill";
 export type ButtonStyle = "glass" | "gradient" | "outline" | "flat";
+export type ImageFilterPreset = "none" | "vibrant" | "warm" | "noir" | "cyber" | "vintage" | "cool";
+export type BgPatternType = "none" | "grain" | "dots" | "grid" | "mesh";
+export type GlassBlurIntensity = "none" | "sm" | "md" | "lg";
 
 export interface ColorPalette {
   id: string;
@@ -41,7 +44,16 @@ export interface ThemeSettings {
   enableGlow: boolean;
   enableRipples: boolean;
   enableMeshTexture: boolean;
-  fontFamily: "Plus Jakarta Sans" | "Space Grotesk" | "Inter" | "Outfit";
+  fontFamily: "Plus Jakarta Sans" | "Space Grotesk" | "Inter" | "Outfit" | "Playfair Display";
+  // Pro Studio Visual / Photo Editor Properties
+  imageFilter?: ImageFilterPreset;
+  imageBrightness?: number; // 80 - 120 (default 100)
+  imageContrast?: number; // 80 - 120 (default 100)
+  imageSaturation?: number; // 0 - 180 (default 100)
+  bgPattern?: BgPatternType;
+  glassBlur?: GlassBlurIntensity;
+  badgeText?: string;
+  badgeColor?: string;
 }
 
 export interface LayoutSettings {
@@ -162,6 +174,12 @@ export interface MenuThemeSettings {
   showPrices: boolean;
   currency: string;
   layout: "grid" | "list";
+  // Pro Studio Visual / Photo Editor Properties
+  imageFilter?: ImageFilterPreset;
+  bgPattern?: BgPatternType;
+  glassBlur?: GlassBlurIntensity;
+  badgeText?: string;
+  badgeColor?: string;
 }
 
 export interface MenuContactInfo {

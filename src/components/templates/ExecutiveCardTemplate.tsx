@@ -6,6 +6,11 @@ import { IconMapper } from "@/components/ui/IconMapper";
 import { Lightbox } from "@/components/ui/Lightbox";
 import { LetterAvatar } from "@/components/ui/LetterAvatar";
 import {
+  getImageFilterStyle,
+  getGlassBlurClass,
+  getBgPatternStyle,
+} from "@/lib/visualEffects";
+import {
   Phone,
   Mail,
   MapPin,
@@ -78,15 +83,37 @@ END:VCARD`;
         fontFamily: themeSettings.fontFamily,
       }}
     >
-      <main className="w-full max-w-md flex flex-col gap-5 my-auto py-6 animate-fade-slide-up">
+      {getBgPatternStyle(themeSettings.bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          style={getBgPatternStyle(themeSettings.bgPattern) || undefined}
+        />
+      )}
+
+      <main className="w-full max-w-md flex flex-col gap-5 my-auto py-6 animate-fade-slide-up relative z-10">
         {/* Executive Virtual Card Container */}
         <div
-          className="relative overflow-hidden rounded-3xl p-6 border shadow-2xl backdrop-blur-xl"
+          className={`relative overflow-hidden rounded-3xl p-6 border shadow-2xl ${
+            getGlassBlurClass(themeSettings.glassBlur) || "backdrop-blur-xl"
+          } ${themeSettings.enableGlow ? "shadow-purple-500/10" : ""}`}
           style={{
             backgroundColor: themeSettings.cardBg,
             borderColor: themeSettings.borderColor,
           }}
         >
+          {/* Custom Floating Badge / Ribbon */}
+          {themeSettings.badgeText && (
+            <span
+              className="absolute top-3.5 right-4 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md z-20"
+              style={{
+                backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
+                color: "#ffffff",
+              }}
+            >
+              {themeSettings.badgeText}
+            </span>
+          )}
+
           {/* Top Decorative Gradient Line */}
           <div
             className="absolute top-0 left-0 right-0 h-1.5"
@@ -102,6 +129,7 @@ END:VCARD`;
               className={`relative group flex-shrink-0 ${
                 profile.avatarUrl && profile.avatarUrl !== "/image.png" ? "cursor-pointer" : ""
               }`}
+              style={getImageFilterStyle(themeSettings)}
               onClick={() => {
                 if (profile.avatarUrl && profile.avatarUrl !== "/image.png") {
                   setLightboxOpen(true);

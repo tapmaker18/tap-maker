@@ -9,6 +9,9 @@ import { LinksManagerPanel } from "@/components/editor/LinksManagerPanel";
 import { ColorPickerPanel } from "@/components/editor/ColorPickerPanel";
 import { PhonePreviewFrame } from "@/components/editor/PhonePreviewFrame";
 import { QRCodeModal } from "@/components/editor/QRCodeModal";
+import { VisualDesignStudioPanel } from "@/components/editor/VisualDesignStudioPanel";
+import { AiAutoStyleModal } from "@/components/editor/AiAutoStyleModal";
+import { AutoStyleResult } from "@/lib/autoStyleAI";
 import confetti from "canvas-confetti";
 import {
   ArrowLeft,
@@ -35,12 +38,46 @@ export default function EditorPage() {
   const profileId = params.id as string;
 
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "links" | "colors" | "template">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "links" | "colors" | "studio" | "template">("info");
   const [mobileMode, setMobileMode] = useState<"edit" | "preview">("edit");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
+
+  const handleApplyAiStyle = (result: AutoStyleResult) => {
+    if (!profile) return;
+    setProfile({
+      ...profile,
+      templateId: result.suggestedTemplate || profile.templateId,
+      subtitle: profile.subtitle || result.tagline || "",
+      themeSettings: {
+        ...profile.themeSettings,
+        preset: result.vibe,
+        themeMode: result.themeMode,
+        accentColor: result.primaryColor,
+        secondaryAccent: result.secondaryAccent,
+        color1: result.primaryColor,
+        color2: result.secondaryAccent,
+        bgPrimary: result.bgPrimary,
+        bgSecondary: result.bgSecondary,
+        cardBg: result.cardBg,
+        borderColor: result.borderColor,
+        textColor: result.textColor,
+        textSecondaryColor: result.textSecondaryColor,
+        fontFamily: result.fontFamily,
+        buttonRadius: result.buttonRadius,
+        imageFilter: result.imageFilter || "none",
+        bgPattern: result.bgPattern || "none",
+      },
+    });
+    confetti({
+      particleCount: 70,
+      spread: 60,
+      origin: { y: 0.6 },
+    });
+  };
 
   const { user, loading: authLoading, signOut, isAdmin, isPending, isSuspended } = useAuth();
 
@@ -172,6 +209,16 @@ export default function EditorPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* AI Auto-Style Button */}
+          <button
+            onClick={() => setAiModalOpen(true)}
+            className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-xs font-bold text-purple-300 flex items-center gap-1.5 transition-colors shadow-sm"
+            title="Scan logo or photo to design theme with AI"
+          >
+            <Sparkles className="w-4 h-4 text-purple-400" />
+            <span className="hidden sm:inline">AI Auto-Style</span>
+          </button>
+
           {/* QR Code Button */}
           <button
             onClick={() => setQrModalOpen(true)}
@@ -293,7 +340,19 @@ export default function EditorPage() {
               }`}
             >
               <Palette className="w-3.5 h-3.5" />
-              <span>Theme & Colors</span>
+              <span>Colors</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("studio")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === "studio"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Visual Studio</span>
             </button>
 
             <button
@@ -321,6 +380,19 @@ export default function EditorPage() {
 
             {activeTab === "colors" && (
               <ColorPickerPanel profile={profile} onChange={setProfile} />
+            )}
+
+            {activeTab === "studio" && (
+              <VisualDesignStudioPanel
+                themeSettings={profile.themeSettings}
+                onChange={(patch) =>
+                  setProfile({
+                    ...profile,
+                    themeSettings: { ...profile.themeSettings, ...patch },
+                  })
+                }
+                onOpenAiAutoStyle={() => setAiModalOpen(true)}
+              />
             )}
 
             {activeTab === "template" && (
@@ -430,6 +502,14 @@ export default function EditorPage() {
         profile={profile}
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+      />
+
+      {/* AI Auto-Style & Theme Designer Modal */}
+      <AiAutoStyleModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        onApply={handleApplyAiStyle}
+        targetType="profile"
       />
     </div>
   );

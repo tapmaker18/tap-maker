@@ -45,6 +45,9 @@ import {
 import { MenuPhonePreviewFrame } from "@/components/menu/MenuPhonePreviewFrame";
 import Link from "next/link";
 import { uploadImageFile } from "@/lib/imageUpload";
+import { AiAutoStyleModal } from "@/components/editor/AiAutoStyleModal";
+import { AutoStyleResult } from "@/lib/autoStyleAI";
+import { ImageFilterPreset, BgPatternType, GlassBlurIntensity } from "@/lib/types";
 
 export default function MenuEditorPage() {
   const params = useParams();
@@ -61,12 +64,31 @@ export default function MenuEditorPage() {
 
   // AI Modal State
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiStyleModalOpen, setAiStyleModalOpen] = useState(false);
   const [aiImageFile, setAiImageFile] = useState<File | null>(null);
   const [aiImagePreview, setAiImagePreview] = useState<string | null>(null);
   const [aiCustomKey, setAiCustomKey] = useState("");
   const [aiScanning, setAiScanning] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiAppendMode, setAiAppendMode] = useState<"replace" | "append">("append");
+
+  const handleApplyMenuAiStyle = (result: AutoStyleResult) => {
+    if (!menu) return;
+    setMenu({
+      ...menu,
+      tagline: menu.tagline || result.tagline || "",
+      themeSettings: {
+        ...menu.themeSettings,
+        accentColor: result.primaryColor,
+        bgColor: result.bgPrimary,
+        textColor: result.textColor,
+        cardStyle: result.suggestedMenuCardStyle || "glass",
+        fontFamily: result.fontFamily,
+        imageFilter: result.imageFilter || "none",
+        bgPattern: result.bgPattern || "none",
+      },
+    });
+  };
 
   // Active Category & Item editing
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
@@ -486,6 +508,16 @@ export default function MenuEditorPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* AI Auto-Style Theme Button */}
+          <button
+            onClick={() => setAiStyleModalOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm"
+            title="Auto-style theme from store photo or logo"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">AI Auto-Style</span>
+          </button>
+
           {/* AI Scanner Button */}
           <button
             onClick={() => setAiModalOpen(true)}
@@ -1462,9 +1494,34 @@ export default function MenuEditorPage() {
         {/* TAB 3: THEME & LAYOUT */}
         {activeTab === "appearance" && (
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 space-y-6">
+            {/* AI Auto-Style Banner */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-slate-900 border border-purple-500/30 flex items-center justify-between gap-3 shadow-lg shadow-purple-950/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-400 flex-shrink-0">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>AI Auto-Style from Shop Photo or Logo</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Upload your store photo or logo. AI will automatically design your colors, vibe, and layout!
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiStyleModalOpen(true)}
+                className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/30 flex items-center gap-1.5 flex-shrink-0 transition-all active:scale-95"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>AI Style</span>
+              </button>
+            </div>
+
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Palette className="w-4 h-4 text-emerald-400" />
-              <span>Theme, Styling &amp; Currency</span>
+              <span>Theme, Photo Filters &amp; Atmosphere</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -1500,20 +1557,24 @@ export default function MenuEditorPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Currency Symbol
+                  Background Tint
                 </label>
-                <input
-                  type="text"
-                  placeholder="₱, $, €, ¥"
-                  value={menu.themeSettings?.currency || "₱"}
-                  onChange={(e) =>
-                    setMenu({
-                      ...menu,
-                      themeSettings: { ...menu.themeSettings, currency: e.target.value },
-                    })
-                  }
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                />
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={menu.themeSettings?.bgColor || "#0b0d14"}
+                    onChange={(e) =>
+                      setMenu({
+                        ...menu,
+                        themeSettings: { ...menu.themeSettings, bgColor: e.target.value },
+                      })
+                    }
+                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-400 font-mono">
+                    {menu.themeSettings?.bgColor || "#0b0d14"}
+                  </span>
+                </div>
               </div>
 
               <div>
@@ -1559,23 +1620,153 @@ export default function MenuEditorPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Background Tint
+                  Card Style
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {(["clean", "glass", "bordered"] as const).map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() =>
+                        setMenu({
+                          ...menu,
+                          themeSettings: { ...menu.themeSettings, cardStyle: style },
+                        })
+                      }
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-semibold capitalize transition-all ${
+                        menu.themeSettings?.cardStyle === style
+                          ? "bg-emerald-600 text-white border-emerald-500"
+                          : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photo Filter Presets */}
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Dish &amp; Cover Photo Filters (Photo Editor Grading)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "none", name: "Natural" },
+                    { id: "vibrant", name: "Vibrant Food" },
+                    { id: "warm", name: "Warm Cafe" },
+                    { id: "noir", name: "Noir (B&W)" },
+                    { id: "cyber", name: "Cyber Neon" },
+                    { id: "vintage", name: "Vintage Film" },
+                    { id: "cool", name: "Cool Crisp" },
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      onClick={() =>
+                        setMenu({
+                          ...menu,
+                          themeSettings: {
+                            ...menu.themeSettings,
+                            imageFilter: filter.id as ImageFilterPreset,
+                          },
+                        })
+                      }
+                      className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                        (menu.themeSettings?.imageFilter || "none") === filter.id
+                          ? "bg-emerald-600 text-white border-emerald-500 shadow-sm"
+                          : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {filter.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Background Texture Overlay */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Background Atmosphere
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["none", "grain", "dots", "grid", "mesh"] as const).map((pat) => (
+                    <button
+                      key={pat}
+                      type="button"
+                      onClick={() =>
+                        setMenu({
+                          ...menu,
+                          themeSettings: { ...menu.themeSettings, bgPattern: pat },
+                        })
+                      }
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-semibold capitalize transition-all ${
+                        (menu.themeSettings?.bgPattern || "none") === pat
+                          ? "bg-emerald-600 text-white border-emerald-500"
+                          : "bg-slate-900 text-slate-400 border-slate-700 hover:text-white"
+                      }`}
+                    >
+                      {pat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Typography */}
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Typography Pairing
+                </label>
+                <select
+                  value={menu.themeSettings?.fontFamily || "Plus Jakarta Sans"}
+                  onChange={(e) =>
+                    setMenu({
+                      ...menu,
+                      themeSettings: { ...menu.themeSettings, fontFamily: e.target.value },
+                    })
+                  }
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="Plus Jakarta Sans">Plus Jakarta Sans (Modern Clean)</option>
+                  <option value="Playfair Display">Playfair Display (Luxury &amp; Fine Dining)</option>
+                  <option value="Outfit">Outfit (Friendly &amp; Warm)</option>
+                  <option value="Space Grotesk">Space Grotesk (Tech / Bar)</option>
+                  <option value="Inter">Inter (Classic Minimalist)</option>
+                </select>
+              </div>
+
+              {/* Floating Ribbon / Badge */}
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Floating Corner Badge / Ribbon
+                </label>
+                <div className="flex gap-2">
                   <input
-                    type="color"
-                    value={menu.themeSettings?.bgColor || "#0b0d14"}
+                    type="text"
+                    value={menu.themeSettings?.badgeText || ""}
                     onChange={(e) =>
                       setMenu({
                         ...menu,
-                        themeSettings: { ...menu.themeSettings, bgColor: e.target.value },
+                        themeSettings: { ...menu.themeSettings, badgeText: e.target.value },
                       })
                     }
-                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer"
+                    placeholder="e.g. Open Now, Bestseller, 20% Off"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
-                  <span className="text-xs text-slate-400 font-mono">
-                    {menu.themeSettings?.bgColor || "#0b0d14"}
-                  </span>
+                  {menu.themeSettings?.badgeText && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMenu({
+                          ...menu,
+                          themeSettings: { ...menu.themeSettings, badgeText: "" },
+                        })
+                      }
+                      className="px-3 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold hover:bg-red-500/20 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1786,6 +1977,14 @@ export default function MenuEditorPage() {
           </div>
         </div>
       )}
+
+      {/* AI Auto-Style Theme Designer Modal */}
+      <AiAutoStyleModal
+        isOpen={aiStyleModalOpen}
+        onClose={() => setAiStyleModalOpen(false)}
+        onApply={handleApplyMenuAiStyle}
+        targetType="menu"
+      />
     </div>
   );
 }
