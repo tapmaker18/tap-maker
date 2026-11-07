@@ -1,8 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Profile } from "@/lib/types";
-import { User, CheckCircle2, Globe, MapPin, Phone, Mail, Building, Image as ImageIcon } from "lucide-react";
+import {
+  User,
+  CheckCircle2,
+  Globe,
+  MapPin,
+  Phone,
+  Mail,
+  Building,
+  Image as ImageIcon,
+  Upload,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { uploadImageFile } from "@/lib/imageUpload";
 
 interface ProfileInfoPanelProps {
   profile: Profile;
@@ -10,6 +23,27 @@ interface ProfileInfoPanelProps {
 }
 
 export const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ profile, onChange }) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const uploadedUrl = await uploadImageFile(file, { folder: "avatars", maxWidth: 600 });
+      updateField("avatarUrl", uploadedUrl);
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      alert("Failed to upload photo. Please try another image file.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const updateField = <K extends keyof Profile>(key: K, value: Profile[K]) => {
     onChange({
       ...profile,
@@ -88,34 +122,94 @@ export const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ profile, onC
         </div>
       </div>
 
-      {/* 2. Photo / Avatar URL & Shape */}
+      {/* 2. Photo / Avatar Upload & Shape */}
       <div className="flex flex-col gap-3 pt-3 border-t border-slate-800">
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
-            <span>Avatar or Logo Image URL</span>
-            <span className="text-[10px] text-slate-400">PNG, JPG, or SVG</span>
+          <label className="block text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
+            <span>Profile Photo / Logo</span>
+            <span className="text-[10px] text-slate-400">PNG, JPG, SVG, WebP (Free Storage)</span>
           </label>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={profile.avatarUrl}
-                onChange={(e) => updateField("avatarUrl", e.target.value)}
-                placeholder="Leave empty for Letter Avatar, or paste image URL"
-                className="w-full text-xs bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-              />
-              <ImageIcon className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              {/* Photo Preview / Initials */}
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex-shrink-0 flex items-center justify-center">
+                {profile.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-base font-extrabold text-purple-400">
+                    {profile.name?.charAt(0)?.toUpperCase() || "A"}
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex-1 min-w-0 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploading ? "Uploading..." : "Upload Photo"}</span>
+                </button>
+
+                {profile.avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => updateField("avatarUrl", "")}
+                    className="px-3 py-2 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-xl text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1"
+                    title="Remove custom photo and use letter avatar"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Reset</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                  className="px-2.5 py-2 text-slate-400 hover:text-slate-200 text-xs transition-colors"
+                >
+                  {showUrlInput ? "Hide URL input" : "Paste URL instead"}
+                </button>
+              </div>
             </div>
 
-            {/* Quick Reset to Letter Avatar */}
-            <button
-              type="button"
-              onClick={() => updateField("avatarUrl", "")}
-              className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl border border-slate-700 whitespace-nowrap"
-              title="Reset to dynamic Letter Avatar"
-            >
-              Letter Avatar
-            </button>
+            {/* Optional URL Input */}
+            {showUrlInput && (
+              <div className="pt-2 border-t border-slate-800 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={profile.avatarUrl}
+                    onChange={(e) => updateField("avatarUrl", e.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 font-mono"
+                  />
+                  <ImageIcon className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

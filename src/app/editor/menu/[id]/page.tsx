@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { MenuPhonePreviewFrame } from "@/components/menu/MenuPhonePreviewFrame";
 import Link from "next/link";
+import { uploadImageFile } from "@/lib/imageUpload";
 
 export default function MenuEditorPage() {
   const params = useParams();
@@ -77,6 +78,62 @@ export default function MenuEditorPage() {
 
   // Slug check error
   const [slugError, setSlugError] = useState<string | null>(null);
+
+  // Logo & Cover Image Upload State
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingItemPhoto, setUploadingItemPhoto] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const itemPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleItemPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingItemPhoto(true);
+      const url = await uploadImageFile(file, { folder: "menu-items", maxWidth: 600 });
+      setEditingItemData((prev) => ({ ...prev, image: url }));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload item photo. Please try another image.");
+    } finally {
+      setUploadingItemPhoto(false);
+      if (itemPhotoInputRef.current) itemPhotoInputRef.current.value = "";
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !menu) return;
+    try {
+      setUploadingLogo(true);
+      const url = await uploadImageFile(file, { folder: "menu-logos", maxWidth: 600 });
+      setMenu({ ...menu, logoUrl: url });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload logo. Please try another image.");
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !menu) return;
+    try {
+      setUploadingCover(true);
+      const url = await uploadImageFile(file, { folder: "menu-covers", maxWidth: 1200, maxHeight: 600 });
+      setMenu({ ...menu, coverImageUrl: url });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload cover photo. Please try another image.");
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -429,30 +486,6 @@ export default function MenuEditorPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mobile Edit vs Preview Toggle */}
-          <div className="flex lg:hidden bg-slate-800 p-0.5 rounded-xl border border-slate-700/60">
-            <button
-              onClick={() => setMobileMode("edit")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                mobileMode === "edit"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setMobileMode("preview")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                mobileMode === "preview"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Preview
-            </button>
-          </div>
-
           {/* AI Scanner Button */}
           <button
             onClick={() => setAiModalOpen(true)}
@@ -474,10 +507,10 @@ export default function MenuEditorPage() {
             <span className="hidden sm:inline">Public Link</span>
           </a>
 
-          {/* Publish / Draft Toggle */}
+          {/* Desktop Publish / Draft Toggle */}
           <button
             onClick={handleTogglePublish}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+            className={`hidden lg:block px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
               menu.status === "published"
                 ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white border-transparent shadow-lg shadow-emerald-600/20"
@@ -486,11 +519,11 @@ export default function MenuEditorPage() {
             {menu.status === "published" ? "Unpublish" : "Publish Live"}
           </button>
 
-          {/* Manual Save Button */}
+          {/* Desktop Manual Save Button */}
           <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="hidden lg:flex px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white items-center gap-1.5 transition-colors disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -499,7 +532,7 @@ export default function MenuEditorPage() {
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            <span className="hidden sm:inline">
+            <span>
               {saving ? "Saving..." : saveSuccess ? "Saved!" : "Save"}
             </span>
           </button>
@@ -749,18 +782,49 @@ export default function MenuEditorPage() {
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                  <label className="text-[11px] font-medium text-slate-400 block mb-1">
-                                    Photo URL (Optional)
+                                  <label className="text-[11px] font-medium text-slate-400 block mb-1 flex items-center justify-between">
+                                    <span>Dish Photo (Optional)</span>
+                                    <span className="text-[9px] text-slate-500">Free Upload</span>
                                   </label>
-                                  <input
-                                    type="url"
-                                    placeholder="https://..."
-                                    value={editingItemData.image || ""}
-                                    onChange={(e) =>
-                                      setEditingItemData({ ...editingItemData, image: e.target.value })
-                                    }
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
-                                  />
+                                  <div className="flex items-center gap-2">
+                                    {editingItemData.image ? (
+                                      <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex-shrink-0">
+                                        <img
+                                          src={editingItemData.image}
+                                          alt="Dish preview"
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      disabled={uploadingItemPhoto}
+                                      onClick={() => itemPhotoInputRef.current?.click()}
+                                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold border border-slate-700 flex items-center gap-1 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                                    >
+                                      {uploadingItemPhoto ? (
+                                        <>
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                          <span>Uploading...</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Upload className="w-3 h-3 text-emerald-400" />
+                                          <span>{editingItemData.image ? "Change Photo" : "Upload Photo"}</span>
+                                        </>
+                                      )}
+                                    </button>
+                                    {editingItemData.image && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditingItemData((prev) => ({ ...prev, image: "" }))}
+                                        className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                        title="Remove photo"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="text-[11px] font-medium text-slate-400 block mb-1">
@@ -909,20 +973,49 @@ export default function MenuEditorPage() {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                       <div>
-                                        <label className="text-[11px] font-medium text-slate-400 block mb-1">
-                                          Photo URL
+                                        <label className="text-[11px] font-medium text-slate-400 block mb-1 flex items-center justify-between">
+                                          <span>Dish Photo (Optional)</span>
+                                          <span className="text-[9px] text-slate-500">Free Upload</span>
                                         </label>
-                                        <input
-                                          type="url"
-                                          value={editingItemData.image || ""}
-                                          onChange={(e) =>
-                                            setEditingItemData({
-                                              ...editingItemData,
-                                              image: e.target.value,
-                                            })
-                                          }
-                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
-                                        />
+                                        <div className="flex items-center gap-2">
+                                          {editingItemData.image ? (
+                                            <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex-shrink-0">
+                                              <img
+                                                src={editingItemData.image}
+                                                alt="Dish preview"
+                                                className="w-full h-full object-cover"
+                                              />
+                                            </div>
+                                          ) : null}
+                                          <button
+                                            type="button"
+                                            disabled={uploadingItemPhoto}
+                                            onClick={() => itemPhotoInputRef.current?.click()}
+                                            className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold border border-slate-700 flex items-center gap-1 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                                          >
+                                            {uploadingItemPhoto ? (
+                                              <>
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                <span>Uploading...</span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Upload className="w-3 h-3 text-emerald-400" />
+                                                <span>{editingItemData.image ? "Change Photo" : "Upload Photo"}</span>
+                                              </>
+                                            )}
+                                          </button>
+                                          {editingItemData.image && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setEditingItemData((prev) => ({ ...prev, image: "" }))}
+                                              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                              title="Remove photo"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                       <div>
                                         <label className="text-[11px] font-medium text-slate-400 block mb-1">
@@ -1147,30 +1240,114 @@ export default function MenuEditorPage() {
                 />
               </div>
 
+              {/* Restaurant Logo with Upload */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Logo Image URL
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center justify-between">
+                  <span>Store Logo / Brand Icon</span>
+                  <span className="text-[10px] text-slate-400">PNG, JPG, WebP</span>
                 </label>
+
                 <input
-                  type="url"
-                  placeholder="https://..."
-                  value={menu.logoUrl || ""}
-                  onChange={(e) => setMenu({ ...menu, logoUrl: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
                 />
+
+                <div className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-700 rounded-xl">
+                  <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {menu.logoUrl ? (
+                      <img src={menu.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Store className="w-5 h-5 text-emerald-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingLogo}
+                      onClick={() => logoInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {uploadingLogo ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Logo</span>
+                        </>
+                      )}
+                    </button>
+                    {menu.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setMenu({ ...menu, logoUrl: "" })}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-lg text-xs border border-slate-700 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
+              {/* Cover Banner Photo with Upload */}
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                  Cover Photo URL
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5 flex items-center justify-between">
+                  <span>Store Header Banner / Cover Photo</span>
+                  <span className="text-[10px] text-slate-400">Wide Photo</span>
                 </label>
+
                 <input
-                  type="url"
-                  placeholder="https://..."
-                  value={menu.coverImageUrl || ""}
-                  onChange={(e) => setMenu({ ...menu, coverImageUrl: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                  className="hidden"
                 />
+
+                <div className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-700 rounded-xl">
+                  <div className="w-16 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {menu.coverImageUrl ? (
+                      <img src={menu.coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-slate-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={uploadingCover}
+                      onClick={() => coverInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-600 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {uploadingCover ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Upload Banner</span>
+                        </>
+                      )}
+                    </button>
+                    {menu.coverImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setMenu({ ...menu, coverImageUrl: "" })}
+                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-lg text-xs border border-slate-700 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1423,6 +1600,62 @@ export default function MenuEditorPage() {
         >
           <MenuPhonePreviewFrame menu={menu} />
         </section>
+      </div>
+
+      {/* Mobile Sticky Bottom Floating Action Bar */}
+      <div className="lg:hidden sticky bottom-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2.5 px-4 flex items-center justify-between gap-3 shadow-2xl">
+        {/* Mobile Edit vs Preview Toggle */}
+        <div className="flex bg-slate-800 p-0.5 rounded-xl border border-slate-700/60">
+          <button
+            onClick={() => setMobileMode("edit")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              mobileMode === "edit"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => setMobileMode("preview")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              mobileMode === "preview"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Preview
+          </button>
+        </div>
+
+        {/* Save & Publish Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleSave()}
+            disabled={saving}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors disabled:opacity-50 active:scale-95"
+          >
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : saveSuccess ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            <span>{saving ? "Saving..." : saveSuccess ? "Saved!" : "Save"}</span>
+          </button>
+
+          <button
+            onClick={handleTogglePublish}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border active:scale-95 ${
+              menu.status === "published"
+                ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white border-transparent shadow-lg shadow-emerald-600/20"
+            }`}
+          >
+            {menu.status === "published" ? "Unpublish" : "Publish"}
+          </button>
+        </div>
       </div>
 
       {/* AI SCANNER MODAL */}

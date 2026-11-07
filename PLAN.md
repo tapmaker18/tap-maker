@@ -331,3 +331,13 @@ Dahil nakadepende ang bawat profile sa specific branding/colors ng company o cli
   - **AI Token Quota Protection**: Default 5 scans per account with usage tracking and admin top-up to preserve Gemini API Free Tier limits.
   - **Server-Side Enforcement**: Approval, suspension, top-ups, account creation/deletion, and quota consumption run through Firebase Admin endpoints. Firestore rules allow browser users to create only pending records and to edit only their own contact details.
   - **Deployment Requirement**: Configure server-only Firebase Admin credentials and `GEMINI_API_KEY`, then deploy `firestore.rules` and `storage.rules` before enabling this phase in production.
+- **Phase 10: Hardware NFC Card Token & Creation Quota Subsystem**
+  - **Business Model**: 1 Token = 1 NFC Card Slot (1 Profile or 1 Menu).
+  - Pooled tokens per client with slot reclamation upon item deletion.
+  - Detailed technical blueprint preserved in `TOKEN_SYSTEM_PLAN.md`.
+- **Phase 11: Comprehensive Mobile View Polish & Dropdown Navigation Subsystem**
+  - **Landing Page Dropdown Menu**: Responsive mobile hamburger toggle with backdrop blur slide-down drawer covering all section anchors and dynamic auth state.
+  - **Dashboard Mobile Optimization**: Compact header token pills, horizontal scrollable tabs, 3-dot bottom sheet for card actions, and responsive card conversion for Admin Member tables.
+  - **Studio Editors Thumb Accessibility**: Sticky bottom mobile action toolbar (Save, Publish, Preview), 16px iOS auto-zoom prevention, and full-bleed borderless mobile preview.
+  - **Public Rendering Mobile Polish**: iOS safe-area insets (`env(safe-area-inset-bottom)`), sticky category auto-scroller for digital menus, and 44x44px touch targets.
+  - Detailed technical blueprint preserved in `MOBILE_VIEW_PLAN.md`.

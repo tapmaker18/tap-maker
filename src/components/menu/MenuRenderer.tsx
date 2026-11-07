@@ -197,7 +197,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
 
         {/* Category Horizontal Scroll */}
         {!searchQuery && menu.categories && menu.categories.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
             {menu.categories
               .filter((cat) => cat.isVisible)
               .map((category) => {
@@ -206,7 +206,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                   <button
                     key={category.id}
                     onClick={() => scrollToCategory(category.id)}
-                    className={`whitespace-nowrap px-3 py-1 rounded-xl text-xs font-medium transition-all ${
+                    className={`whitespace-nowrap px-3 py-1 rounded-xl text-xs font-medium transition-all flex-shrink-0 cursor-pointer active:scale-95 ${
                       isActive
                         ? "bg-slate-100 text-slate-900 font-semibold shadow-sm"
                         : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800/80"
@@ -224,7 +224,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
       </div>
 
       {/* Categories & Items Content */}
-      <main className="px-4 py-5 space-y-8">
+      <main className="px-4 py-5 space-y-8 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
         {filteredCategories.length === 0 ? (
           <div className="py-12 text-center text-slate-500">
             <UtensilsCrossed className="w-8 h-8 mx-auto mb-2 opacity-30" />

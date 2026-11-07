@@ -172,26 +172,6 @@ export default function EditorPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Mobile View Toggle */}
-          <div className="lg:hidden flex rounded-xl bg-slate-800 p-1 border border-slate-700">
-            <button
-              onClick={() => setMobileMode("edit")}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${
-                mobileMode === "edit" ? "bg-purple-600 text-white" : "text-slate-400"
-              }`}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setMobileMode("preview")}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${
-                mobileMode === "preview" ? "bg-purple-600 text-white" : "text-slate-400"
-              }`}
-            >
-              Preview
-            </button>
-          </div>
-
           {/* QR Code Button */}
           <button
             onClick={() => setQrModalOpen(true)}
@@ -214,21 +194,21 @@ export default function EditorPage() {
             <span className="hidden sm:inline">Open</span>
           </a>
 
-          {/* Save Draft Button */}
+          {/* Desktop Save Draft Button */}
           <button
             onClick={() => handleSave("draft")}
             disabled={isSaving}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition-colors"
+            className="hidden lg:flex px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 items-center gap-1.5 transition-colors"
           >
             <Save className="w-4 h-4" />
-            <span className="hidden sm:inline">Save Draft</span>
+            <span>Save Draft</span>
           </button>
 
-          {/* Publish Button */}
+          {/* Desktop Publish Button */}
           <button
             onClick={() => handleSave("published")}
             disabled={isSaving}
-            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 flex items-center gap-1.5 transition-all active:scale-95"
+            className="hidden lg:flex px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 items-center gap-1.5 transition-all active:scale-95"
           >
             {saveSuccess ? (
               <Check className="w-4 h-4 text-emerald-300" />
@@ -392,6 +372,57 @@ export default function EditorPage() {
         >
           <PhonePreviewFrame profile={profile} />
         </section>
+      </div>
+
+      {/* Mobile Sticky Bottom Floating Action Bar */}
+      <div className="lg:hidden sticky bottom-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-2.5 px-4 flex items-center justify-between gap-3 shadow-2xl">
+        {/* Mobile Edit vs Preview Toggle */}
+        <div className="flex bg-slate-800 p-0.5 rounded-xl border border-slate-700/60">
+          <button
+            onClick={() => setMobileMode("edit")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              mobileMode === "edit"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => setMobileMode("preview")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              mobileMode === "preview"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Preview
+          </button>
+        </div>
+
+        {/* Save Draft & Publish Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleSave("draft")}
+            disabled={isSaving}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 active:scale-95 transition-all"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Draft</span>
+          </button>
+          <button
+            onClick={() => handleSave("published")}
+            disabled={isSaving}
+            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 flex items-center gap-1.5 active:scale-95 transition-all"
+          >
+            {saveSuccess ? (
+              <Check className="w-4 h-4 text-emerald-300" />
+            ) : (
+              <Globe className="w-4 h-4" />
+            )}
+            <span>{saveSuccess ? "Saved!" : "Publish"}</span>
+          </button>
+        </div>
       </div>
 
       {/* QR Code & Share Modal */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Profile } from "@/lib/types";
 import { Menu } from "@/lib/types";
 import {
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeQrProfile, setActiveQrProfile] = useState<Profile | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardTab>("profiles");
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   // Admin: which user's profiles to view ("all" or specific userId)
   const [adminUserFilter, setAdminUserFilter] = useState<string>("all");
   const [showUserList, setShowUserList] = useState(false);
@@ -382,11 +384,33 @@ export default function DashboardPage() {
     return Array.from(userMap.values());
   }, [profiles, isAdmin]);
 
-  // Filter profiles based on search, status, and admin user filter
+  const getOwnerDisplayName = (userId?: string): string => {
+    if (!userId) return "Tap-Maker Studio";
+    const foundMember = members.find((m) => m.uid === userId);
+    if (foundMember) {
+      return foundMember.businessName || foundMember.contactName || foundMember.email;
+    }
+    if (user && user.uid === userId) {
+      return user.displayName || user.email || "You";
+    }
+    return "Client Account";
+  };
+
+  // Filter profiles based on search (name, slug, business name, company, or creator), status, and admin user filter
   const filtered = profiles.filter((p) => {
+    const q = search.toLowerCase().trim();
+    const ownerName = getOwnerDisplayName(p.userId).toLowerCase();
+    const company = (p.contactInfo?.company || "").toLowerCase();
+    const subtitle = (p.subtitle || "").toLowerCase();
+
     const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.slug.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      p.slug.toLowerCase().includes(q) ||
+      ownerName.includes(q) ||
+      company.includes(q) ||
+      subtitle.includes(q);
+
     const matchesStatus =
       filterStatus === "all" ? true : p.status === filterStatus;
     const matchesUser =
@@ -395,9 +419,17 @@ export default function DashboardPage() {
   });
 
   const filteredMenus = menus.filter((m) => {
+    const q = search.toLowerCase().trim();
+    const ownerName = getOwnerDisplayName(m.userId).toLowerCase();
+    const tagline = (m.tagline || "").toLowerCase();
+
     const matchesSearch =
-      m.businessName.toLowerCase().includes(search.toLowerCase()) ||
-      m.slug.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      (m.businessName || "").toLowerCase().includes(q) ||
+      (m.slug || "").toLowerCase().includes(q) ||
+      ownerName.includes(q) ||
+      tagline.includes(q);
+
     const matchesStatus =
       filterStatus === "all" ? true : m.status === filterStatus;
     return matchesSearch && matchesStatus;
@@ -426,10 +458,12 @@ export default function DashboardPage() {
   // Filter members for Super Admin management tab
   const filteredMembers = clientMembers.filter((m) => {
     const matchesFilter = memberFilter === "all" ? true : m.status === memberFilter;
-    const q = memberSearch.toLowerCase();
+    const q = memberSearch.toLowerCase().trim();
     const matchesSearch =
-      m.businessName.toLowerCase().includes(q) ||
-      m.email.toLowerCase().includes(q) ||
+      !q ||
+      (m.businessName || "").toLowerCase().includes(q) ||
+      (m.email || "").toLowerCase().includes(q) ||
+      (m.contactName && m.contactName.toLowerCase().includes(q)) ||
       (m.phone && m.phone.toLowerCase().includes(q)) ||
       (m.orderRef && m.orderRef.toLowerCase().includes(q));
     return matchesFilter && matchesSearch;
@@ -439,121 +473,167 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Dashboard Top Header */}
       <header className="h-16 px-4 sm:px-8 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+        <Link
+          href="/"
+          className="flex items-center gap-3 group hover:opacity-90 transition-opacity cursor-pointer"
+          title="Return to Landing Page"
+        >
           <img
             src="/logo.svg"
             alt="Tap-Maker"
-            className="w-9 h-9 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover"
+            className="w-9 h-9 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover group-hover:scale-105 transition-transform"
           />
           <div>
-            <span className="font-extrabold text-base tracking-tight text-white">
-              Tap-Maker Studio
-            </span>
-            {isAdmin && (
-              <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1">
-                <Shield className="w-2.5 h-2.5" />
-                Super Admin
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-base tracking-tight text-white group-hover:text-purple-300 transition-colors">
+                Tap-Maker Studio
               </span>
-            )}
+              {isAdmin && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1">
+                  <Shield className="w-2.5 h-2.5" />
+                  Super Admin
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-slate-400 group-hover:text-purple-400 transition-colors block -mt-0.5">
+              ← Visit Landing Page
+            </span>
           </div>
-        </div>
+        </Link>
 
+        {/* Right Header Navigation with User Dropdown */}
         <div className="flex items-center gap-3">
           {/* Member Card Token Quota Display (Regular Approved Members) */}
           {!isAdmin && memberAccount && (
             <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs font-semibold ${
                 isTokensExhausted
                   ? "bg-rose-500/15 border-rose-500/30 text-rose-300"
                   : "bg-amber-500/15 border-amber-500/30 text-amber-300"
               }`}
               title={`Card Slots Quota: 1 Card = 1 Profile or Menu. You have used ${clientTokensUsed} of ${clientTokenLimit} slots.`}
             >
-              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-              <span>
+              <CreditCard className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <span className="sm:hidden font-mono text-white text-[11px]">
+                {clientTokensUsed}/{clientTokenLimit}
+              </span>
+              <span className="hidden sm:inline">
                 Cards: <strong className="font-mono text-white">{clientTokensUsed}/{clientTokenLimit}</strong>
                 {isTokensExhausted ? " (Full)" : ` (${clientTokensRemaining} left)`}
               </span>
             </div>
           )}
 
-          {/* Member AI Quota Display (Regular Approved Members) */}
-          {!isAdmin && memberAccount && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>AI Scans: {memberAccount.aiScansUsed || 0} / {memberAccount.aiScansLimit || 5}</span>
-            </div>
-          )}
-
-          <a
-            href="/"
-            className="text-xs text-slate-400 hover:text-white transition-colors hidden sm:block"
-          >
-            Visit Landing Page
-          </a>
-
-          {activeTab === "profiles" ? (
-            <button
-              onClick={handleCreateProfileClick}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 ${
-                isTokensExhausted
-                  ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
-                  : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30"
-              }`}
-            >
-              {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
-              <span>Create Profile</span>
-            </button>
-          ) : activeTab === "menus" ? (
-            <button
-              onClick={handleCreateMenuClick}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 ${
-                isTokensExhausted
-                  ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
-                  : "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-orange-600/30"
-              }`}
-            >
-              {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
-              <span>Create Menu</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setAddAccountModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Add Client Account</span>
-            </button>
-          )}
-
-          {/* User Status & Sign Out */}
+          {/* User Profile Dropdown Pill */}
           {user && (
-            <div className="flex items-center gap-2 pl-3 border-l border-slate-800">
-              <div className="hidden md:flex flex-col items-end">
-                <span className="text-xs font-mono text-slate-400">
-                  {user.displayName || user.email}
-                </span>
-                {user.displayName && user.email && (
-                  <span className="text-[10px] text-slate-500">{user.email}</span>
-                )}
-              </div>
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="Avatar"
-                  className="w-8 h-8 rounded-full border-2 border-slate-700"
-                />
-              ) : null}
+            <div className="relative">
               <button
-                onClick={async () => {
-                  await signOut();
-                  router.push("/login");
-                }}
-                className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
-                title="Sign Out of Studio"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 transition-all text-left cursor-pointer active:scale-95"
+                aria-label="User Account Menu"
               >
-                <LogOut className="w-4 h-4" />
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Avatar"
+                    className="w-7 h-7 rounded-full border border-slate-600 object-cover"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                    {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                <div className="hidden sm:flex flex-col min-w-0 max-w-[130px]">
+                  <span className="text-xs font-bold text-white truncate leading-tight">
+                    {user.displayName || user.email?.split("@")[0]}
+                  </span>
+                  <span className="text-[10px] text-purple-400 font-medium leading-tight">
+                    {isAdmin ? "Super Admin" : "Client Account"}
+                  </span>
+                </div>
+
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                    userMenuOpen ? "rotate-180 text-white" : ""
+                  }`}
+                />
               </button>
+
+              {/* User Dropdown Floating Menu */}
+              {userMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setUserMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-2xl backdrop-blur-xl z-50 p-3 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 mb-2">
+                      <p className="font-bold text-white text-sm truncate">
+                        {user.displayName || user.email}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-mono truncate">{user.email}</p>
+                      {isAdmin ? (
+                        <span className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                          <Shield className="w-2.5 h-2.5" />
+                          Super Admin Role
+                        </span>
+                      ) : (
+                        <span className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold border border-purple-500/30">
+                          <Tag className="w-2.5 h-2.5" />
+                          Client Member
+                        </span>
+                      )}
+                    </div>
+
+                    {!isAdmin && memberAccount && (
+                      <div className="space-y-1.5 px-3 py-2 border-t border-slate-800/80 mb-2 text-[11px] text-slate-300">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <CreditCard className="w-3 h-3 text-amber-400" />
+                            Card Slots:
+                          </span>
+                          <span className="font-mono font-bold text-white">
+                            {clientTokensUsed} / {clientTokenLimit}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-purple-400" />
+                            AI Scans:
+                          </span>
+                          <span className="font-mono font-bold text-white">
+                            {memberAccount.aiScansUsed || 0} / {memberAccount.aiScansLimit || 5}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-1 pt-1 border-t border-slate-800/80">
+                      <Link
+                        href="/"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Visit Landing Page</span>
+                      </Link>
+
+                      <button
+                        onClick={async () => {
+                          setUserMenuOpen(false);
+                          await signOut();
+                          router.push("/login");
+                        }}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors text-left cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out of Studio</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -562,10 +642,10 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 flex flex-col gap-6">
         {/* Tab Switcher */}
-        <div className="flex flex-wrap items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-2xl w-fit">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-900 border border-slate-800 p-1 rounded-2xl w-full sm:w-fit overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab("profiles")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex-shrink-0 whitespace-nowrap ${
               activeTab === "profiles"
                 ? "bg-purple-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
@@ -576,7 +656,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("menus")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex-shrink-0 whitespace-nowrap ${
               activeTab === "menus"
                 ? "bg-orange-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
@@ -594,7 +674,7 @@ export default function DashboardPage() {
           {isAdmin && (
             <button
               onClick={() => setActiveTab("members")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex-shrink-0 whitespace-nowrap ${
                 activeTab === "members"
                   ? "bg-indigo-600 text-white shadow-sm"
                   : "text-slate-400 hover:text-white"
@@ -796,34 +876,49 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Filter and Search Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by customer name or slug..."
-                  className="w-full text-xs bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                />
+            {/* Filter, Search, and Create Action Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                <div className="relative flex-1 sm:max-w-xs">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by customer name or slug..."
+                    className="w-full text-xs bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-900 border border-slate-800 p-1 rounded-2xl">
+                  {(["all", "published", "draft"] as const).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setFilterStatus(st)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
+                        filterStatus === st
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-900 border border-slate-800 p-1 rounded-2xl">
-                {(["all", "published", "draft"] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setFilterStatus(st)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all ${
-                      filterStatus === st
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
+              {/* Create Profile Button Beside Search */}
+              <button
+                onClick={handleCreateProfileClick}
+                className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition-all active:scale-95 flex-shrink-0 cursor-pointer ${
+                  isTokensExhausted
+                    ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
+                    : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-purple-600/30"
+                }`}
+              >
+                {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
+                <span>Create Profile</span>
+              </button>
             </div>
 
             {/* Profiles Table / Cards */}
@@ -842,7 +937,7 @@ export default function DashboardPage() {
                 </p>
                 <button
                   onClick={handleCreateProfileClick}
-                  className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+                  className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create First Profile</span>
@@ -858,11 +953,13 @@ export default function DashboardPage() {
                       className="group relative flex flex-col justify-between rounded-3xl bg-slate-900 border border-slate-800 hover:border-slate-700 p-5 shadow-xl transition-all duration-300 hover:translate-y-[-2px]"
                     >
                       <div>
-                        {/* Admin: Owner badge */}
-                        {isAdmin && item.userId && (
-                          <div className="flex items-center gap-1.5 mb-3 text-[10px] text-slate-500">
-                            <UserIcon className="w-3 h-3" />
-                            <span className="font-mono">Owner: {item.userId.substring(0, 12)}...</span>
+                        {/* Admin: Creator badge */}
+                        {isAdmin && (
+                          <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300">
+                            <UserIcon className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                            <span className="truncate">
+                              Create by: <strong className="text-white font-semibold">{getOwnerDisplayName(item.userId)}</strong>
+                            </span>
                           </div>
                         )}
 
@@ -1064,9 +1161,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="relative w-full sm:w-80">
+            {/* Search and Create Action Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 sm:max-w-md">
                 <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                 <input
                   type="text"
@@ -1076,6 +1173,19 @@ export default function DashboardPage() {
                   className="w-full text-xs bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
                 />
               </div>
+
+              {/* Create Menu Button Beside Search */}
+              <button
+                onClick={handleCreateMenuClick}
+                className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md transition-all active:scale-95 flex-shrink-0 cursor-pointer ${
+                  isTokensExhausted
+                    ? "bg-slate-800 border border-slate-700 text-slate-400 hover:text-white"
+                    : "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-orange-600/30"
+                }`}
+              >
+                {isTokensExhausted ? <Lock className="w-4 h-4 text-amber-400" /> : <Plus className="w-4 h-4" />}
+                <span>Create Menu</span>
+              </button>
             </div>
 
             {/* Menu Cards */}
@@ -1088,7 +1198,7 @@ export default function DashboardPage() {
                 </p>
                 <button
                   onClick={handleCreateMenuClick}
-                  className="mt-4 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+                  className="mt-4 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Create First Menu</span>
@@ -1102,6 +1212,16 @@ export default function DashboardPage() {
                     className="group relative flex flex-col justify-between rounded-3xl bg-slate-900 border border-slate-800 hover:border-orange-500/30 p-5 shadow-xl transition-all duration-300 hover:translate-y-[-2px]"
                   >
                     <div>
+                      {/* Admin: Creator badge */}
+                      {isAdmin && (
+                        <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300">
+                          <UserIcon className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                          <span className="truncate">
+                            Create by: <strong className="text-white font-semibold">{getOwnerDisplayName(menu.userId)}</strong>
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3">
                           {/* Menu Logo or Emoji */}
