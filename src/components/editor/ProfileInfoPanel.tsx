@@ -35,9 +35,9 @@ export const ProfileInfoPanel: React.FC<ProfileInfoPanelProps> = ({ profile, onC
       setIsUploading(true);
       const uploadedUrl = await uploadImageFile(file, { folder: "avatars", maxWidth: 600 });
       updateField("avatarUrl", uploadedUrl);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Photo upload failed:", err);
-      alert("Failed to upload photo. Please try another image file.");
+      alert(err?.message || "Failed to upload photo. Please try another image file.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

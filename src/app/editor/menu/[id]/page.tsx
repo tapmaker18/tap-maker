@@ -94,9 +94,9 @@ export default function MenuEditorPage() {
       setUploadingItemPhoto(true);
       const url = await uploadImageFile(file, { folder: "menu-items", maxWidth: 600 });
       setEditingItemData((prev) => ({ ...prev, image: url }));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to upload item photo. Please try another image.");
+      alert(err?.message || "Failed to upload item photo. Please try another image.");
     } finally {
       setUploadingItemPhoto(false);
       if (itemPhotoInputRef.current) itemPhotoInputRef.current.value = "";
@@ -110,9 +110,9 @@ export default function MenuEditorPage() {
       setUploadingLogo(true);
       const url = await uploadImageFile(file, { folder: "menu-logos", maxWidth: 600 });
       setMenu({ ...menu, logoUrl: url });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to upload logo. Please try another image.");
+      alert(err?.message || "Failed to upload logo. Please try another image.");
     } finally {
       setUploadingLogo(false);
       if (logoInputRef.current) logoInputRef.current.value = "";
@@ -126,9 +126,9 @@ export default function MenuEditorPage() {
       setUploadingCover(true);
       const url = await uploadImageFile(file, { folder: "menu-covers", maxWidth: 1200, maxHeight: 600 });
       setMenu({ ...menu, coverImageUrl: url });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to upload cover photo. Please try another image.");
+      alert(err?.message || "Failed to upload cover photo. Please try another image.");
     } finally {
       setUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = "";
