@@ -100,19 +100,36 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
 
 // ── Gemini ────────────────────────────────────────────────────────
 async function scanWithGemini(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
-  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-    model: "gemini-1.5-flash",
-  });
-  const result = await model.generateContent([
-    AUTO_STYLE_PROMPT,
-    {
-      inlineData: {
-        data: buffer.toString("base64"),
-        mimeType: mimeType || "image/jpeg",
-      },
-    },
-  ]);
-  return result.response.text().trim();
+  const models = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-2.5-flash"];
+  let lastErr: unknown = null;
+
+  for (const modelName of models) {
+    try {
+      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.2,
+        },
+      });
+      const result = await model.generateContent([
+        AUTO_STYLE_PROMPT,
+        {
+          inlineData: {
+            data: buffer.toString("base64"),
+            mimeType: mimeType || "image/jpeg",
+          },
+        },
+      ]);
+      const text = result.response.text().trim();
+      if (text) return text;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`Gemini model ${modelName} failed:`, err);
+    }
+  }
+
+  throw lastErr || new Error("Gemini analysis failed.");
 }
 
 // ── Groq / Vision fallback ───────────────────────────────────────
@@ -139,14 +156,28 @@ async function scanWithGroq(apiKey: string, buffer: Buffer, mimeType: string): P
           },
         ],
         temperature: 0.2,
-        max_tokens: 750, // Keep within Groq on-demand OTPM limit of 1000
+        max_tokens: 850,
         response_format: { type: "json_object" },
       });
 
       const text = completion.choices[0]?.message?.content?.trim();
       if (text) return text;
-    } catch (err) {
+    } catch (err: any) {
       lastErr = err;
+      // If Groq aborted JSON validation due to token cutoff, rescue failed_generation if usable
+      const failedGen = err?.error?.failed_generation;
+      if (typeof failedGen === "string" && failedGen.includes('"primaryColor"')) {
+        let fixed = failedGen.trim();
+        if (!fixed.endsWith("}")) {
+          fixed = fixed.replace(/,\s*$/, "");
+          if (!fixed.endsWith('"') && !fixed.endsWith("}")) fixed += '"';
+          if (!fixed.endsWith("}")) fixed += "}";
+        }
+        try {
+          JSON.parse(fixed);
+          return fixed;
+        } catch {}
+      }
       console.warn(`Groq model ${model} auto-style failed, trying fallback:`, err);
     }
   }

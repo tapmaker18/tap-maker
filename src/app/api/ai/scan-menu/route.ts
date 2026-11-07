@@ -96,19 +96,36 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
 
 // ── Gemini ────────────────────────────────────────────────────────
 async function scanWithGemini(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
-  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-    model: "gemini-1.5-flash",
-  });
-  const result = await model.generateContent([
-    MENU_PROMPT,
-    {
-      inlineData: {
-        data: buffer.toString("base64"),
-        mimeType: mimeType || "image/jpeg",
-      },
-    },
-  ]);
-  return result.response.text().trim();
+  const models = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-2.5-flash"];
+  let lastErr: unknown = null;
+
+  for (const modelName of models) {
+    try {
+      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.1,
+        },
+      });
+      const result = await model.generateContent([
+        MENU_PROMPT,
+        {
+          inlineData: {
+            data: buffer.toString("base64"),
+            mimeType: mimeType || "image/jpeg",
+          },
+        },
+      ]);
+      const text = result.response.text().trim();
+      if (text) return text;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`Gemini menu model ${modelName} failed:`, err);
+    }
+  }
+
+  throw lastErr || new Error("Gemini menu scan failed.");
 }
 
 // ── Groq / Vision ────────────────────────────────────────────────
