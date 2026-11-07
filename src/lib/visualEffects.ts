@@ -99,3 +99,17 @@ export function getBgPatternStyle(pattern?: string): React.CSSProperties | null 
   return null;
 }
 
+/**
+ * Sanitizes AI-generated or user-provided custom CSS to ensure safety against injection.
+ */
+export function sanitizeCustomCss(css?: string): string {
+  if (!css || typeof css !== "string") return "";
+  return css
+    .replace(/<[^>]*>/g, "") // Strip any HTML/XML tags
+    .replace(/@import\b[^;]*;/gi, "") // Disallow external stylesheet imports
+    .replace(/expression\s*\([^)]*\)/gi, "") // Disallow old IE expressions
+    .replace(/javascript\s*:/gi, "") // Disallow javascript protocols
+    .trim();
+}
+
+

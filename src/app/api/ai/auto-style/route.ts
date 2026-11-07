@@ -15,14 +15,15 @@ class ApiError extends Error {
   }
 }
 
-const AUTO_STYLE_PROMPT = `You are a world-class brand identity designer, visual stylist, and UI/UX color master.
-Analyze this image (which may be a company logo, physical storefront, restaurant ambiance, printed dish, menu, or business card).
-Extract the visual brand identity and generate a cohesive, aesthetic color palette and theme configuration.
+const AUTO_STYLE_PROMPT = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
+Analyze this image (which may be a company logo, physical storefront, restaurant ambiance, signature dish, printed menu, or business card).
+DO NOT JUST PICK COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
 
-Output strictly valid JSON with no markdown wrapping, matching this exact shape:
+Output strictly valid JSON with no markdown wrapping or fences, matching this exact shape:
 {
-  "vibe": "Short 2-4 word aesthetic description (e.g. Artisan Warm Espresso, Futuristic Neon Studio, Luxe Executive Corporate, Clean Botanical Bistro)",
-  "vibeExplanation": "1-2 sentence description explaining why these colors and mood fit the visual branding",
+  "designConcept": "A distinct creative design title (e.g. 'Artisan Roast & Velvet Wood', 'Tokyo Cyberpunk Hologram', 'Minimalist Scandinavian Bistro', 'Luxe Gold Leaf Executive', 'Sun-Drenched Coastal Bistro', 'Neo-Brutalist Bold Streetwear')",
+  "vibe": "Short 2-4 word aesthetic description",
+  "vibeExplanation": "1-2 sentences explaining why this visual design, lighting, and mood embody this brand",
   "tagline": "A punchy, attractive tagline or brand slogan",
   "themeMode": "dark",
   "primaryColor": "#8b5cf6",
@@ -38,19 +39,34 @@ Output strictly valid JSON with no markdown wrapping, matching this exact shape:
   "suggestedTemplate": "executive-card",
   "suggestedMenuCardStyle": "glass",
   "imageFilter": "vibrant",
-  "bgPattern": "none"
+  "bgPattern": "none",
+  "customCss": "/* Scoped custom CSS designed specifically for this brand */"
 }
+
+CUSTOM CSS DESIGN INSTRUCTIONS:
+Author 8 to 25 lines of elegant, creative, high-impact CSS rules in "customCss".
+Make sure every property has !important so it overrides framework defaults cleanly.
+Use the following target classes:
+- .tmaker-profile-root, .tmaker-menu-root : Page canvas (give it unique radial/mesh background gradient, ambient lighting or subtle atmospheric depth)
+- .tmaker-card, .tmaker-menu-item-card : Main card containers (give them distinctive borders, glassmorphism backdrop-blur, custom border-radius, box-shadows, or subtle ambient glow)
+- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (custom border, glow ring, or hover transition)
+- .tmaker-name, .tmaker-menu-title : Brand/person title (letter-spacing, text-shadow, gradient text clipping, or font-weight)
+- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline
+- .tmaker-link-item : Profile link buttons (custom gradients, soft hover lift, glow on hover, border accent)
+- .tmaker-action-btn : Primary action buttons (Save Contact, Call store)
+- .tmaker-badge, .tmaker-menu-badge : Custom badge or ribbon (metallic gradient, neon tag, or frosted pill)
+- .tmaker-menu-category-btn : Menu category navigation pills
+- .tmaker-menu-item-price : Dish price tag styling
 
 Important rules:
 1. Ensure high WCAG contrast between textColor and bgPrimary / cardBg.
-2. If the image is dark or glowing, choose "dark" themeMode. If clean and bright, choose "light" or sleek "dark" based on the brand's aesthetic.
-3. Generate realistic, gorgeous hex codes derived from or complementing the colors in the image.
-4. "fontFamily" must be one of: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", "Playfair Display".
-5. "suggestedTemplate" must be one of: "executive-card", "cyber-glow", "modern-bio".
-6. "suggestedMenuCardStyle" must be one of: "clean", "glass", "bordered".
-7. "buttonRadius" must be one of: "sharp", "rounded", "pill".
-8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
-9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
+2. In "customCss", write ONLY pure CSS rules. NEVER include <style> tags or HTML.
+3. "fontFamily" must be one of: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", "Playfair Display".
+4. "suggestedTemplate" must be one of: "executive-card", "cyber-glow", "modern-bio".
+5. "suggestedMenuCardStyle" must be one of: "clean", "glass", "bordered".
+6. "buttonRadius" must be one of: "sharp", "rounded", "pill".
+7. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
+8. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
 async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
   if (isAdmin) return;

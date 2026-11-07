@@ -70,6 +70,8 @@ export default function EditorPage() {
         buttonRadius: result.buttonRadius,
         imageFilter: result.imageFilter || "none",
         bgPattern: result.bgPattern || "none",
+        designConcept: result.designConcept || result.vibe,
+        customCss: result.customCss || profile.themeSettings.customCss || "",
       },
     });
     confetti({

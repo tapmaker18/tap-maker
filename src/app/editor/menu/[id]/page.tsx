@@ -41,6 +41,7 @@ import {
   Palette,
   Loader2,
   Key,
+  Code2,
 } from "lucide-react";
 import { MenuPhonePreviewFrame } from "@/components/menu/MenuPhonePreviewFrame";
 import Link from "next/link";
@@ -48,6 +49,7 @@ import { uploadImageFile } from "@/lib/imageUpload";
 import { AiAutoStyleModal } from "@/components/editor/AiAutoStyleModal";
 import { AutoStyleResult } from "@/lib/autoStyleAI";
 import { ImageFilterPreset, BgPatternType, GlassBlurIntensity } from "@/lib/types";
+import confetti from "canvas-confetti";
 
 export default function MenuEditorPage() {
   const params = useParams();
@@ -86,8 +88,19 @@ export default function MenuEditorPage() {
         fontFamily: result.fontFamily,
         imageFilter: result.imageFilter || "none",
         bgPattern: result.bgPattern || "none",
+        designConcept: result.designConcept || result.vibe,
+        customCss: result.customCss || menu.themeSettings?.customCss || "",
       },
     });
+    try {
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.6 },
+      });
+    } catch {
+      // ignore
+    }
   };
 
   // Active Category & Item editing
@@ -1767,6 +1780,68 @@ export default function MenuEditorPage() {
                       Clear
                     </button>
                   )}
+                </div>
+              </div>
+
+              {/* AI Bespoke Visual Design & Custom CSS */}
+              <div className="sm:col-span-2 pt-2 border-t border-slate-800 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Code2 className="w-4 h-4 text-emerald-400" />
+                      <span>Bespoke AI Visual Design (Custom CSS)</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Live scoped CSS rules applied to this menu. Edit or let AI craft it for you!
+                    </p>
+                  </div>
+                  {menu.themeSettings?.customCss && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMenu({
+                          ...menu,
+                          themeSettings: { ...menu.themeSettings, customCss: "", designConcept: undefined },
+                        })
+                      }
+                      className="text-[11px] text-red-400 hover:text-red-300 underline"
+                    >
+                      Clear CSS
+                    </button>
+                  )}
+                </div>
+
+                {menu.themeSettings?.designConcept && (
+                  <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs text-purple-300 font-bold flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Visual Concept: {menu.themeSettings.designConcept}</span>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-inner focus-within:border-emerald-500">
+                  <div className="px-3.5 py-1.5 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                    <span>menu-theme.css</span>
+                    <span>{menu.themeSettings?.customCss ? `${menu.themeSettings.customCss.length} chars` : "empty"}</span>
+                  </div>
+                  <textarea
+                    value={menu.themeSettings?.customCss || ""}
+                    onChange={(e) =>
+                      setMenu({
+                        ...menu,
+                        themeSettings: { ...menu.themeSettings, customCss: e.target.value },
+                      })
+                    }
+                    rows={8}
+                    placeholder={`/* Targetable selectors:
+.tmaker-menu-root - canvas background
+.tmaker-menu-hero - header cover
+.tmaker-menu-logo - business logo
+.tmaker-menu-item-card - food cards
+.tmaker-menu-item-price - price tags
+*/`}
+                    className="w-full text-xs font-mono bg-transparent p-3 text-emerald-300 placeholder-slate-600 focus:outline-none resize-y leading-relaxed"
+                    spellCheck={false}
+                  />
                 </div>
               </div>
             </div>

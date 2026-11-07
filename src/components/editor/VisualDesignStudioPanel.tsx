@@ -14,6 +14,7 @@ import {
   Eye,
   Check,
   RotateCcw,
+  Code2,
 } from "lucide-react";
 import {
   ThemeSettings,
@@ -33,9 +34,9 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
   onChange,
   onOpenAiAutoStyle,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<"filters" | "atmosphere" | "typography" | "badges">(
-    "filters"
-  );
+  const [activeSubTab, setActiveSubTab] = useState<
+    "filters" | "atmosphere" | "typography" | "badges" | "customCss"
+  >("filters");
 
   const filterPresets: {
     id: ImageFilterPreset;
@@ -173,6 +174,19 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
         >
           <Tag className="w-3.5 h-3.5" />
           <span>Badges</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab("customCss")}
+          className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all whitespace-nowrap ${
+            activeSubTab === "customCss"
+              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm"
+              : "text-purple-400 hover:text-purple-300"
+          }`}
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>AI Design (CSS)</span>
         </button>
       </div>
 
@@ -449,6 +463,130 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
                   Clear Badge
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. AI Bespoke Visual Design & Custom CSS Studio */}
+      {activeSubTab === "customCss" && (
+        <div className="flex flex-col gap-4 animate-fade-in">
+          {/* Design Concept Banner */}
+          {themeSettings.designConcept ? (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-slate-900 border border-purple-500/30 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-purple-400">
+                    Active AI Design Concept
+                  </span>
+                  <p className="text-xs font-bold text-white">{themeSettings.designConcept}</p>
+                </div>
+              </div>
+              {onOpenAiAutoStyle && (
+                <button
+                  type="button"
+                  onClick={onOpenAiAutoStyle}
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold shadow-md transition-all active:scale-95 flex-shrink-0"
+                >
+                  Redesign
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold text-white">No AI Design Generated Yet</p>
+                <p className="text-[11px] text-slate-400">
+                  Upload your logo/photo and AI will author a bespoke stylesheet for your brand!
+                </p>
+              </div>
+              {onOpenAiAutoStyle && (
+                <button
+                  type="button"
+                  onClick={onOpenAiAutoStyle}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white text-[11px] font-bold shadow-md flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Scan with AI</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* CSS Code Editor / Live Textarea */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Custom Visual CSS (Live Applied)</span>
+              </label>
+              {themeSettings.customCss && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ customCss: "", designConcept: undefined })}
+                  className="text-[11px] text-red-400 hover:text-red-300 underline"
+                >
+                  Clear Custom CSS
+                </button>
+              )}
+            </div>
+
+            <div className="relative rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-inner focus-within:border-purple-500">
+              <div className="px-3.5 py-2 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                <span>custom-theme.css</span>
+                <span>{themeSettings.customCss ? `${themeSettings.customCss.length} chars` : "empty"}</span>
+              </div>
+              <textarea
+                value={themeSettings.customCss || ""}
+                onChange={(e) => onChange({ customCss: e.target.value })}
+                rows={10}
+                placeholder={`/* Write custom CSS or let AI design it for you */
+.tmaker-card {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+  border-radius: 28px !important;
+}
+.tmaker-link-item:hover {
+  transform: translateY(-3px) !important;
+}`}
+                className="w-full text-xs font-mono bg-transparent p-3.5 text-cyan-300 placeholder-slate-600 focus:outline-none resize-y leading-relaxed"
+                spellCheck={false}
+              />
+            </div>
+          </div>
+
+          {/* Targetable Classes Cheat-Sheet */}
+          <div className="p-3.5 rounded-2xl bg-slate-900/40 border border-slate-800/80 flex flex-col gap-2">
+            <span className="text-[11px] font-bold text-slate-300">
+              Targetable CSS Selectors (Use with !important):
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px] font-mono text-slate-400">
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-profile-root</span>: canvas/bg
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-card</span>: virtual card
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-avatar-wrap</span>: avatar frame
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-name</span>: person/brand title
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-link-item</span>: link buttons
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-action-btn</span>: Save Contact
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-badge</span>: floating ribbon
+              </div>
+              <div className="p-1.5 rounded-lg bg-slate-950 border border-slate-800">
+                <span className="text-purple-400 font-bold">.tmaker-subtitle</span>: role/tagline
+              </div>
             </div>
           </div>
         </div>

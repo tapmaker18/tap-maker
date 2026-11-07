@@ -9,6 +9,7 @@ import {
   getImageFilterStyle,
   getGlassBlurClass,
   getBgPatternStyle,
+  sanitizeCustomCss,
 } from "@/lib/visualEffects";
 import {
   Phone,
@@ -76,13 +77,21 @@ END:VCARD`;
 
   return (
     <div
-      className="relative min-h-screen w-full flex flex-col items-center justify-start p-4 sm:p-6"
+      className="relative min-h-screen w-full flex flex-col items-center justify-start p-4 sm:p-6 tmaker-profile-root"
       style={{
         backgroundColor: themeSettings.bgPrimary,
         color: themeSettings.textColor,
         fontFamily: themeSettings.fontFamily,
       }}
     >
+      {themeSettings.customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: sanitizeCustomCss(themeSettings.customCss),
+          }}
+        />
+      )}
+
       {getBgPatternStyle(themeSettings.bgPattern) && (
         <div
           className="absolute inset-0 pointer-events-none opacity-20 z-0"
@@ -93,7 +102,7 @@ END:VCARD`;
       <main className="w-full max-w-md flex flex-col gap-5 my-auto py-6 animate-fade-slide-up relative z-10">
         {/* Executive Virtual Card Container */}
         <div
-          className={`relative overflow-hidden rounded-3xl p-6 border shadow-2xl ${
+          className={`relative overflow-hidden rounded-3xl p-6 border shadow-2xl tmaker-card ${
             getGlassBlurClass(themeSettings.glassBlur) || "backdrop-blur-xl"
           } ${themeSettings.enableGlow ? "shadow-purple-500/10" : ""}`}
           style={{
@@ -104,7 +113,7 @@ END:VCARD`;
           {/* Custom Floating Badge / Ribbon */}
           {themeSettings.badgeText && (
             <span
-              className="absolute top-3.5 right-4 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md z-20"
+              className="absolute top-3.5 right-4 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md z-20 tmaker-badge"
               style={{
                 backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
                 color: "#ffffff",
@@ -126,7 +135,7 @@ END:VCARD`;
           <div className="flex items-start gap-4 pt-2">
             {/* Avatar */}
             <div
-              className={`relative group flex-shrink-0 ${
+              className={`relative group flex-shrink-0 tmaker-avatar-wrap ${
                 profile.avatarUrl && profile.avatarUrl !== "/image.png" ? "cursor-pointer" : ""
               }`}
               style={getImageFilterStyle(themeSettings)}
@@ -149,7 +158,7 @@ END:VCARD`;
             {/* Name & Title */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-1.5">
-                <h1 className={`font-bold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}>
+                <h1 className={`font-bold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}>
                   {profile.name}
                   {layoutSettings.showVerificationBadge && profile.verified && (
                     <CheckCircle2
@@ -162,7 +171,7 @@ END:VCARD`;
 
               {profile.subtitle && (
                 <p
-                  className="text-xs font-semibold mt-1 break-words leading-snug"
+                  className="text-xs font-semibold mt-1 break-words leading-snug tmaker-subtitle"
                   style={{ color: themeSettings.accentColor }}
                 >
                   {profile.subtitle}
@@ -181,7 +190,7 @@ END:VCARD`;
           {/* Bio Statement */}
           {profile.bio && (
             <p
-              className="text-xs leading-relaxed mt-4 pt-3 border-t font-normal"
+              className="text-xs leading-relaxed mt-4 pt-3 border-t font-normal tmaker-bio"
               style={{
                 borderColor: themeSettings.borderColor,
                 color: themeSettings.textSecondaryColor,
@@ -200,7 +209,7 @@ END:VCARD`;
                   onLinkClick("vcard-save", "Save Contact (vCard)");
                 }
               }}
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs shadow-md transition-all duration-200 hover:opacity-90 active:scale-95"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold text-xs shadow-md transition-all duration-200 hover:opacity-90 active:scale-95 tmaker-action-btn"
               style={{
                 backgroundColor: themeSettings.accentColor,
                 color: "#ffffff",
@@ -324,7 +333,7 @@ END:VCARD`;
               }}
               target={isPreview || link.url === "#vcard" ? "_self" : "_blank"}
               rel="noopener noreferrer"
-              className="flex items-center justify-between p-3 rounded-2xl border transition-all duration-200 hover:translate-y-[-1px] hover:shadow-lg"
+              className="flex items-center justify-between p-3 rounded-2xl border transition-all duration-200 hover:translate-y-[-1px] hover:shadow-lg tmaker-link-item"
               style={{
                 backgroundColor: themeSettings.cardBg,
                 borderColor: link.isHighlighted

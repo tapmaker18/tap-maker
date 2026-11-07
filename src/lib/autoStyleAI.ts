@@ -9,6 +9,7 @@ import type {
 
 export interface AutoStyleResult {
   vibe: string;
+  designConcept?: string;
   vibeExplanation?: string;
   tagline?: string;
   themeMode: "dark" | "light";
@@ -26,6 +27,7 @@ export interface AutoStyleResult {
   suggestedMenuCardStyle: "clean" | "glass" | "bordered";
   imageFilter?: ImageFilterPreset;
   bgPattern?: BgPatternType;
+  customCss?: string;
 }
 
 /**

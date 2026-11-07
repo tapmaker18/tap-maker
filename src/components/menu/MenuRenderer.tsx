@@ -3,6 +3,12 @@
 import React, { useState, useRef, useMemo } from "react";
 import { Menu } from "@/lib/types";
 import {
+  getImageFilterStyle,
+  getGlassBlurClass,
+  getBgPatternStyle,
+  sanitizeCustomCss,
+} from "@/lib/visualEffects";
+import {
   UtensilsCrossed,
   Clock,
   MapPin,
@@ -78,17 +84,36 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
 
   return (
     <div
-      className="min-h-full w-full text-slate-100 selection:bg-emerald-500 selection:text-white"
-      style={{ backgroundColor: menu.themeSettings?.bgColor || "#0b0d14" }}
+      className="relative min-h-full w-full text-slate-100 selection:bg-emerald-500 selection:text-white tmaker-menu-root"
+      style={{
+        backgroundColor: menu.themeSettings?.bgColor || "#0b0d14",
+        fontFamily: menu.themeSettings?.fontFamily,
+      }}
     >
+      {menu.themeSettings?.customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: sanitizeCustomCss(menu.themeSettings.customCss),
+          }}
+        />
+      )}
+
+      {getBgPatternStyle(menu.themeSettings?.bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          style={getBgPatternStyle(menu.themeSettings?.bgPattern) || undefined}
+        />
+      )}
+
       {/* Header / Hero */}
-      <header className="relative">
+      <header className="relative tmaker-menu-hero">
         <div className="h-40 sm:h-48 w-full relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950">
           {menu.coverImageUrl ? (
             <img
               src={menu.coverImageUrl}
               alt={menu.businessName}
               className="w-full h-full object-cover"
+              style={getImageFilterStyle(menu.themeSettings)}
             />
           ) : (
             <div className="w-full h-full opacity-30 flex items-center justify-center">
@@ -96,6 +121,19 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/60 to-transparent" />
+
+          {/* Floating Badge */}
+          {menu.themeSettings?.badgeText && (
+            <span
+              className="absolute top-3.5 right-4 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md z-20 tmaker-menu-badge"
+              style={{
+                backgroundColor: menu.themeSettings?.badgeColor || accentColor,
+                color: "#ffffff",
+              }}
+            >
+              {menu.themeSettings.badgeText}
+            </span>
+          )}
         </div>
 
         {/* Business Info Header */}
@@ -103,7 +141,10 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div className="flex items-end gap-3.5">
               {/* Logo / Avatar */}
-              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border-2 border-slate-700 shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border-2 border-slate-700 shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center tmaker-menu-logo"
+                style={getImageFilterStyle(menu.themeSettings)}
+              >
                 {menu.logoUrl ? (
                   <img
                     src={menu.logoUrl}
@@ -121,11 +162,11 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
               </div>
 
               <div className="pb-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight truncate tmaker-menu-title">
                   {menu.businessName || "Your Business Name"}
                 </h1>
                 {menu.tagline && (
-                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 tmaker-menu-tagline">
                     {menu.tagline}
                   </p>
                 )}
@@ -258,7 +299,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                 {category.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-3.5 rounded-2xl border transition-all ${
+                    className={`p-3.5 rounded-2xl border transition-all tmaker-menu-item-card ${
                       item.isAvailable
                         ? "bg-slate-900/60 hover:bg-slate-800/50 border-slate-800/80"
                         : "bg-slate-900/20 border-slate-800/40 opacity-60"
@@ -267,7 +308,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                     <div className="flex gap-3 items-start">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-xs sm:text-sm font-semibold text-slate-100">
+                          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 tmaker-menu-item-name">
                             {item.name}
                           </h3>
 
@@ -285,7 +326,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                         </div>
 
                         {item.description && (
-                          <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed tmaker-menu-item-desc">
                             {item.description}
                           </p>
                         )}
@@ -305,7 +346,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
 
                         <div className="mt-2.5">
                           <span
-                            className="text-sm font-bold font-mono"
+                            className="text-sm font-bold font-mono tmaker-menu-item-price"
                             style={{ color: accentColor }}
                           >
                             {currencySymbol}
@@ -320,6 +361,7 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                             src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
+                            style={getImageFilterStyle(menu.themeSettings)}
                           />
                         </div>
                       )}

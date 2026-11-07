@@ -20,6 +20,12 @@ import {
   ArrowLeft,
   Share2,
 } from "lucide-react";
+import {
+  getImageFilterStyle,
+  getGlassBlurClass,
+  getBgPatternStyle,
+  sanitizeCustomCss,
+} from "@/lib/visualEffects";
 import Link from "next/link";
 
 export default function PublicMenuPage() {
@@ -149,9 +155,27 @@ export default function PublicMenuPage() {
 
   return (
     <div
-      className="min-h-screen text-slate-100 selection:bg-emerald-500 selection:text-white"
-      style={{ backgroundColor: menu.themeSettings?.bgColor || "#0b0d14" }}
+      className="relative min-h-screen text-slate-100 selection:bg-emerald-500 selection:text-white tmaker-menu-root"
+      style={{
+        backgroundColor: menu.themeSettings?.bgColor || "#0b0d14",
+        fontFamily: menu.themeSettings?.fontFamily,
+      }}
     >
+      {menu.themeSettings?.customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: sanitizeCustomCss(menu.themeSettings.customCss),
+          }}
+        />
+      )}
+
+      {getBgPatternStyle(menu.themeSettings?.bgPattern) && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          style={getBgPatternStyle(menu.themeSettings?.bgPattern) || undefined}
+        />
+      )}
+
       {/* Draft notice banner if not published */}
       {isDraft && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 text-amber-300 px-4 py-2.5 text-xs flex items-center justify-center gap-2 sticky top-0 z-50 backdrop-blur-md">
@@ -161,7 +185,7 @@ export default function PublicMenuPage() {
       )}
 
       {/* Header / Hero Section */}
-      <header className="relative">
+      <header className="relative tmaker-menu-hero">
         {/* Cover image or gradient backdrop */}
         <div className="h-44 sm:h-56 w-full relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950">
           {menu.coverImageUrl ? (
@@ -169,6 +193,7 @@ export default function PublicMenuPage() {
               src={menu.coverImageUrl}
               alt={menu.businessName}
               className="w-full h-full object-cover"
+              style={getImageFilterStyle(menu.themeSettings)}
             />
           ) : (
             <div className="w-full h-full opacity-30 flex items-center justify-center">
@@ -176,6 +201,19 @@ export default function PublicMenuPage() {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d14] via-[#0b0d14]/60 to-transparent" />
+
+          {/* Floating Badge */}
+          {menu.themeSettings?.badgeText && (
+            <span
+              className="absolute top-3.5 right-4 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-md z-20 tmaker-menu-badge"
+              style={{
+                backgroundColor: menu.themeSettings?.badgeColor || accentColor,
+                color: "#ffffff",
+              }}
+            >
+              {menu.themeSettings.badgeText}
+            </span>
+          )}
         </div>
 
         {/* Business Info Container */}
@@ -183,7 +221,10 @@ export default function PublicMenuPage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="flex items-end gap-4">
               {/* Logo / Avatar */}
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-900 border-2 border-slate-700/80 shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-900 border-2 border-slate-700/80 shadow-2xl overflow-hidden flex-shrink-0 flex items-center justify-center tmaker-menu-logo"
+                style={getImageFilterStyle(menu.themeSettings)}
+              >
                 {menu.logoUrl ? (
                   <img
                     src={menu.logoUrl}
@@ -201,11 +242,11 @@ export default function PublicMenuPage() {
               </div>
 
               <div className="pb-1">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight tmaker-menu-title">
                   {menu.businessName}
                 </h1>
                 {menu.tagline && (
-                  <p className="text-xs sm:text-sm text-slate-400 mt-0.5 line-clamp-1">
+                  <p className="text-xs sm:text-sm text-slate-400 mt-0.5 line-clamp-1 tmaker-menu-tagline">
                     {menu.tagline}
                   </p>
                 )}
@@ -354,7 +395,7 @@ export default function PublicMenuPage() {
                 {category.items.map((item) => (
                   <div
                     key={item.id}
-                    className={`relative p-4 rounded-2xl transition-all border ${
+                    className={`relative p-4 rounded-2xl transition-all border tmaker-menu-item-card ${
                       item.isAvailable
                         ? "bg-slate-900/60 hover:bg-slate-800/50 border-slate-800/80 hover:border-slate-700/80"
                         : "bg-slate-900/20 border-slate-800/40 opacity-60"
@@ -364,7 +405,7 @@ export default function PublicMenuPage() {
                       {/* Left: Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm sm:text-base font-semibold text-slate-100 leading-snug">
+                          <h3 className="text-sm sm:text-base font-semibold text-slate-100 leading-snug tmaker-menu-item-name">
                             {item.name}
                           </h3>
 
@@ -382,7 +423,7 @@ export default function PublicMenuPage() {
                         </div>
 
                         {item.description && (
-                          <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed tmaker-menu-item-desc">
                             {item.description}
                           </p>
                         )}
@@ -404,7 +445,7 @@ export default function PublicMenuPage() {
                         {/* Price */}
                         <div className="mt-3">
                           <span
-                            className="text-base font-bold"
+                            className="text-base font-bold tmaker-menu-item-price"
                             style={{ color: accentColor }}
                           >
                             {currencySymbol}
@@ -420,6 +461,7 @@ export default function PublicMenuPage() {
                             src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
+                            style={getImageFilterStyle(menu.themeSettings)}
                           />
                         </div>
                       )}

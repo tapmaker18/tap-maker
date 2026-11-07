@@ -9,6 +9,7 @@ import { ChevronRight, CheckCircle, ExternalLink } from "lucide-react";
 import {
   getImageFilterStyle,
   getBgPatternStyle,
+  sanitizeCustomCss,
 } from "@/lib/visualEffects";
 
 interface TemplateProps {
@@ -46,13 +47,21 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
 
   return (
     <div
-      className="relative min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8"
+      className="relative min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 tmaker-profile-root"
       style={{
         backgroundColor: themeSettings.bgPrimary,
         color: themeSettings.textColor,
         fontFamily: themeSettings.fontFamily,
       }}
     >
+      {themeSettings.customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: sanitizeCustomCss(themeSettings.customCss),
+          }}
+        />
+      )}
+
       {getBgPatternStyle(themeSettings.bgPattern) && (
         <div
           className="absolute inset-0 pointer-events-none opacity-20 z-0"
@@ -64,7 +73,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
-            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-md z-20 animate-fade-in"
+            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-md z-20 animate-fade-in tmaker-badge"
             style={{
               backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
               color: "#ffffff",
@@ -77,7 +86,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         {/* Profile Card Header */}
         <div className="flex flex-col items-center text-center gap-3">
           <div
-            className={`relative group transition-transform duration-300 ${
+            className={`relative group transition-transform duration-300 tmaker-avatar-wrap ${
               profile.avatarUrl && profile.avatarUrl !== "/image.png"
                 ? "cursor-pointer hover:scale-105"
                 : ""
@@ -106,7 +115,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           <div className="flex items-center justify-center gap-1.5 mt-1 px-4 text-center">
-            <h1 className={`font-bold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}>
+            <h1 className={`font-bold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}>
               {profile.name}
               {layoutSettings.showVerificationBadge && profile.verified && (
                 <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500/20 inline-block ml-1.5 align-middle flex-shrink-0" />
@@ -115,14 +124,14 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           {layoutSettings.showSubtitlePill && profile.subtitle && (
-            <p className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 opacity-80">
+            <p className="text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 opacity-80 tmaker-subtitle">
               {profile.subtitle}
             </p>
           )}
 
           {profile.bio && (
             <p
-              className="text-xs sm:text-sm font-normal max-w-xs leading-relaxed"
+              className="text-xs sm:text-sm font-normal max-w-xs leading-relaxed tmaker-bio"
               style={{ color: themeSettings.textSecondaryColor }}
             >
               {profile.bio}
@@ -138,7 +147,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
               href={isPreview ? undefined : link.url}
               target={isPreview ? "_self" : "_blank"}
               rel="noopener noreferrer"
-              className={`group flex items-center justify-between p-3.5 border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] ${getButtonRadius()}`}
+              className={`group flex items-center justify-between p-3.5 border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] tmaker-link-item ${getButtonRadius()}`}
               onClick={() => {
                 if (!isPreview && onLinkClick) {
                   onLinkClick(link.id, link.title);

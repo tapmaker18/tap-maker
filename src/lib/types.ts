@@ -54,6 +54,9 @@ export interface ThemeSettings {
   glassBlur?: GlassBlurIntensity;
   badgeText?: string;
   badgeColor?: string;
+  // AI Bespoke Visual Design & Custom CSS
+  customCss?: string;
+  designConcept?: string;
 }
 
 export interface LayoutSettings {
@@ -180,6 +183,9 @@ export interface MenuThemeSettings {
   glassBlur?: GlassBlurIntensity;
   badgeText?: string;
   badgeColor?: string;
+  // AI Bespoke Visual Design & Custom CSS
+  customCss?: string;
+  designConcept?: string;
 }
 
 export interface MenuContactInfo {

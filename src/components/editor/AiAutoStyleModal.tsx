@@ -14,6 +14,7 @@ import {
   ChevronUp,
   Layout,
   Sliders,
+  Code2,
 } from "lucide-react";
 import { scanAutoStyleWithAI, AutoStyleResult } from "@/lib/autoStyleAI";
 import { getGeminiApiKey, saveGeminiApiKey } from "@/lib/menuAI";
@@ -39,6 +40,7 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
   const [scanStep, setScanStep] = useState<string>("Analyzing image colors & lighting...");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AutoStyleResult | null>(null);
+  const [showCssPreview, setShowCssPreview] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -258,6 +260,13 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   </span>
                 </div>
 
+                {result.designConcept && (
+                  <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 pt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>Visual Concept: {result.designConcept}</span>
+                  </div>
+                )}
+
                 {result.vibeExplanation && (
                   <p className="text-xs leading-relaxed opacity-90">{result.vibeExplanation}</p>
                 )}
@@ -340,6 +349,33 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   <span className="font-bold text-white truncate">{result.fontFamily}</span>
                 </div>
               </div>
+
+              {/* Bespoke AI Custom Visual CSS */}
+              {result.customCss && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                      <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Bespoke AI Visual Design (Custom CSS)</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowCssPreview(!showCssPreview)}
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 underline font-semibold"
+                    >
+                      {showCssPreview ? "Hide CSS" : "View Generated CSS"}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                    AI generated custom design code tailored specifically for this brand. Click apply to activate it!
+                  </p>
+                  {showCssPreview && (
+                    <pre className="text-[10px] font-mono text-cyan-300 bg-slate-900/90 p-3 rounded-xl max-h-40 overflow-y-auto border border-cyan-500/20 whitespace-pre-wrap leading-relaxed">
+                      {result.customCss}
+                    </pre>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -9,6 +9,7 @@ import { ChevronRight, CheckCircle2 } from "lucide-react";
 import {
   getImageFilterStyle,
   getBgPatternStyle,
+  sanitizeCustomCss,
 } from "@/lib/visualEffects";
 
 interface TemplateProps {
@@ -83,13 +84,21 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen w-full flex flex-col items-center overflow-x-hidden selection:bg-purple-500 selection:text-white"
+      className="relative min-h-screen w-full flex flex-col items-center overflow-x-hidden selection:bg-purple-500 selection:text-white tmaker-profile-root"
       style={{
         backgroundColor: themeSettings.bgPrimary,
         color: themeSettings.textColor,
         fontFamily: themeSettings.fontFamily,
       }}
     >
+      {themeSettings.customCss && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: sanitizeCustomCss(themeSettings.customCss),
+          }}
+        />
+      )}
+
       {getBgPatternStyle(themeSettings.bgPattern) && (
         <div
           className="absolute inset-0 pointer-events-none opacity-20 z-0"
@@ -148,7 +157,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
-            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-lg z-20 animate-fade-in"
+            className="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow-lg z-20 animate-fade-in tmaker-badge"
             style={{
               backgroundColor: themeSettings.badgeColor || themeSettings.accentColor || color1,
               color: "#ffffff",
@@ -161,7 +170,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         {/* Profile Header */}
         <header className="flex flex-col items-center text-center gap-3 w-full">
           <div
-            className={`relative group ${
+            className={`relative group tmaker-avatar-wrap ${
               profile.avatarUrl && profile.avatarUrl !== "/image.png" ? "cursor-pointer" : ""
             }`}
             style={getImageFilterStyle(themeSettings)}
@@ -195,7 +204,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           {/* Business / Artist Name */}
           <div className="flex items-center justify-center gap-2 mt-2 px-4 text-center">
             <h1
-              className={`font-extrabold tracking-tight break-words leading-tight ${getNameSizeClass(profile.name)}`}
+              className={`font-extrabold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}
               style={{ color: themeSettings.textColor }}
             >
               {profile.name}
@@ -211,7 +220,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           {/* Subtitle Pill Badge */}
           {layoutSettings.showSubtitlePill && profile.subtitle && (
             <div
-              className="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide border shadow-sm backdrop-blur-md"
+              className="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide border shadow-sm backdrop-blur-md tmaker-subtitle"
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.05)",
                 borderColor: themeSettings.borderColor,
@@ -225,7 +234,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           {/* Short Bio */}
           {profile.bio && (
             <p
-              className="text-sm font-medium leading-relaxed max-w-sm mt-1"
+              className="text-sm font-medium leading-relaxed max-w-sm mt-1 tmaker-bio"
               style={{ color: themeSettings.textSecondaryColor }}
             >
               {profile.bio}
@@ -274,7 +283,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                             onLinkClick(link.id, link.title);
                           }
                         }}
-                        className={`ripple-container relative group flex items-center justify-between p-3.5 border transition-all duration-300 ${getButtonRadius()} ${
+                        className={`ripple-container relative group flex items-center justify-between p-3.5 border transition-all duration-300 tmaker-link-item ${getButtonRadius()} ${
                           isHighlighted
                             ? "shadow-lg shadow-purple-500/10 hover:shadow-purple-500/25 scale-[1.01]"
                             : "hover:translate-y-[-2px]"
