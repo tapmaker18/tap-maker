@@ -47,7 +47,7 @@ import { MenuPhonePreviewFrame } from "@/components/menu/MenuPhonePreviewFrame";
 import Link from "next/link";
 import { uploadImageFile } from "@/lib/imageUpload";
 import { AiAutoStyleModal } from "@/components/editor/AiAutoStyleModal";
-import { AutoStyleResult } from "@/lib/autoStyleAI";
+import { AutoStyleResult, scanAutoStyleWithAI } from "@/lib/autoStyleAI";
 import { ImageFilterPreset, BgPatternType, GlassBlurIntensity } from "@/lib/types";
 import confetti from "canvas-confetti";
 
@@ -73,6 +73,11 @@ export default function MenuEditorPage() {
   const [aiScanning, setAiScanning] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiAppendMode, setAiAppendMode] = useState<"replace" | "append">("append");
+
+  // Inline AI Style Prompt State
+  const [inlineMenuPrompt, setInlineMenuPrompt] = useState("");
+  const [inlineMenuAiLoading, setInlineMenuAiLoading] = useState(false);
+  const [inlineMenuAiError, setInlineMenuAiError] = useState<string | null>(null);
 
   const handleApplyMenuAiStyle = (result: AutoStyleResult) => {
     if (!menu) return;
@@ -100,6 +105,23 @@ export default function MenuEditorPage() {
       });
     } catch {
       // ignore
+    }
+  };
+
+  const handleApplyInlineMenuPrompt = async (promptOverride?: string) => {
+    const text = (promptOverride || inlineMenuPrompt).trim();
+    if (!text) return;
+    try {
+      setInlineMenuAiLoading(true);
+      setInlineMenuAiError(null);
+      const res = await scanAutoStyleWithAI(null, getGeminiApiKey() || undefined, text);
+      handleApplyMenuAiStyle(res);
+      setInlineMenuPrompt("");
+    } catch (err: any) {
+      console.error("Inline AI styling failed:", err);
+      setInlineMenuAiError(err?.message || "Failed to generate design from prompt.");
+    } finally {
+      setInlineMenuAiLoading(false);
     }
   };
 
@@ -1817,6 +1839,89 @@ export default function MenuEditorPage() {
                     <span>Visual Concept: {menu.themeSettings.designConcept}</span>
                   </div>
                 )}
+
+                {/* Inline Style Prompt Redesign Box */}
+                <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Prompt AI to Redesign Theme &amp; CSS</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setAiStyleModalOpen(true)}
+                      className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-3 h-3" />
+                      <span>Upload photo instead</span>
+                    </button>
+                  </div>
+
+                  {inlineMenuAiError && (
+                    <div className="text-[11px] text-red-300 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl">
+                      {inlineMenuAiError}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={inlineMenuPrompt}
+                      onChange={(e) => setInlineMenuPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !inlineMenuAiLoading) {
+                          e.preventDefault();
+                          handleApplyInlineMenuPrompt();
+                        }
+                      }}
+                      placeholder="e.g. Modern botanical cafe with warm terracotta and sage accents..."
+                      className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
+                    />
+                    <button
+                      type="button"
+                      disabled={!inlineMenuPrompt.trim() || inlineMenuAiLoading}
+                      onClick={() => handleApplyInlineMenuPrompt()}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 active:scale-95 shadow-md shadow-emerald-600/20"
+                    >
+                      {inlineMenuAiLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Designing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Apply Prompt</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Preset Chips */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
+                    {[
+                      "✨ Luxury Gold & Dark",
+                      "☕ Artisan Wood & Roast",
+                      "🌿 Fresh Botanical & Sage",
+                      "⚡ Neon Cyber Tokyo",
+                      "🍷 Moody Italian Bistro",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        disabled={inlineMenuAiLoading}
+                        onClick={() => {
+                          setInlineMenuPrompt(preset);
+                          handleApplyInlineMenuPrompt(preset);
+                        }}
+                        className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-600/20 hover:border-emerald-500/40 border border-slate-700/60 text-slate-300 hover:text-white transition-all text-left"
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-inner focus-within:border-emerald-500">
                   <div className="px-3.5 py-1.5 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between text-[10px] text-slate-400 font-mono">

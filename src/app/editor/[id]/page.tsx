@@ -394,6 +394,7 @@ export default function EditorPage() {
                   })
                 }
                 onOpenAiAutoStyle={() => setAiModalOpen(true)}
+                onApplyResult={handleApplyAiStyle}
               />
             )}
 

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { scanAutoStyleWithAI, AutoStyleResult } from "@/lib/autoStyleAI";
 import { getGeminiApiKey, saveGeminiApiKey } from "@/lib/menuAI";
+import { compressImage } from "@/lib/imageUpload";
 
 interface AiAutoStyleModalProps {
   isOpen: boolean;
@@ -25,6 +26,15 @@ interface AiAutoStyleModalProps {
   onApply: (result: AutoStyleResult) => void;
   targetType?: "profile" | "menu";
 }
+
+const PROMPT_PRESETS = [
+  "✨ Luxury VIP gold & midnight charcoal lounge",
+  "☕ Warm artisan cafe with cozy rustic woods",
+  "⚡ Cyberpunk neon with deep electric accents",
+  "🌿 Clean botanical matcha & organic pastel",
+  "💼 Modern executive minimalist monochrome",
+  "🍰 Pastel aesthetic dessert bakery",
+];
 
 export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
   isOpen,
@@ -34,6 +44,7 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [userPrompt, setUserPrompt] = useState<string>("");
   const [customKey, setCustomKey] = useState<string>(getGeminiApiKey() || "");
   const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
   const [scanning, setScanning] = useState<boolean>(false);
@@ -59,29 +70,47 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
     reader.readAsDataURL(selected);
   };
 
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleStartScan = async () => {
-    if (!file) {
-      setError("Please select or upload a photo first.");
+    if (!file && !userPrompt.trim()) {
+      setError("Please select a photo or enter a style prompt.");
       return;
     }
 
     try {
       setScanning(true);
       setError(null);
-      setScanStep("Analyzing brand colors & visual mood...");
+      setScanStep(
+        file
+          ? "Compressing image & analyzing brand identity..."
+          : "Synthesizing bespoke visual design from prompt..."
+      );
+
+      let fileToSend: File | null = file;
+      if (file) {
+        try {
+          const compressed = await compressImage(file, 800, 800, 0.82);
+          fileToSend = new File([compressed.blob], file.name.replace(/\.[^.]+$/, ".webp"), {
+            type: compressed.blob.type || "image/jpeg",
+          });
+        } catch (compressErr) {
+          console.warn("Client image compression fallback:", compressErr);
+        }
+      }
 
       const stepTimer1 = setTimeout(() => {
-        setScanStep("Generating high-contrast harmonious palette...");
-      }, 1500);
+        setScanStep("Authoring custom CSS rules & high-contrast palette...");
+      }, 1200);
 
-      const stepTimer2 = setTimeout(() => {
-        setScanStep("Matching typography, layout & atmosphere...");
-      }, 3000);
-
-      const autoStyleData = await scanAutoStyleWithAI(file, customKey);
+      const autoStyleData = await scanAutoStyleWithAI(fileToSend, customKey, userPrompt.trim());
 
       clearTimeout(stepTimer1);
-      clearTimeout(stepTimer2);
       setResult(autoStyleData);
 
       if (customKey.trim()) {
@@ -89,7 +118,7 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
       }
     } catch (err: any) {
       console.error("AI Auto-Style failed:", err);
-      setError(err?.message || "Failed to analyze photo. Please try another image.");
+      setError(err?.message || "Failed to style with AI. Please try another prompt or image.");
     } finally {
       setScanning(false);
     }
@@ -135,9 +164,54 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
             </div>
           )}
 
-          {/* Upload Area if not yet scanned or re-selecting */}
+          {/* Upload Area & Style Direction if not yet scanned */}
           {!result && (
             <div className="flex flex-col gap-4">
+              {/* Style Direction Prompt Box */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Your Style Prompt / Vibe Direction</span>
+                    <span className="text-[10px] text-purple-300 font-normal">
+                      ({file ? "Guides photo analysis" : "Prompt-only design"})
+                    </span>
+                  </label>
+                  {userPrompt && (
+                    <button
+                      type="button"
+                      onClick={() => setUserPrompt("")}
+                      className="text-[10px] text-slate-400 hover:text-white underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  value={userPrompt}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Luxury VIP gold & midnight charcoal lounge, Japanese minimalist cafe, Cyberpunk neon street..."
+                  className="w-full text-xs bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all resize-none leading-relaxed"
+                />
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
+                  {PROMPT_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setUserPrompt(preset)}
+                      className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/70 hover:bg-purple-600/30 hover:border-purple-500/50 border border-slate-700/60 text-slate-300 hover:text-white transition-all text-left"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photo Upload Area */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -148,34 +222,41 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 ${
+                className={`border-2 border-dashed rounded-3xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 relative ${
                   previewUrl
                     ? "border-purple-500/50 bg-purple-500/5 hover:bg-purple-500/10"
                     : "border-slate-800 bg-slate-950 hover:border-slate-700 hover:bg-slate-900/60"
                 }`}
               >
                 {previewUrl ? (
-                  <div className="relative w-full max-h-48 rounded-2xl overflow-hidden border border-slate-700/60 shadow-lg">
+                  <div className="relative w-full max-h-44 rounded-2xl overflow-hidden border border-slate-700/60 shadow-lg">
                     <img
                       src={previewUrl}
                       alt="Source preview"
-                      className="w-full h-48 object-cover object-center"
+                      className="w-full h-44 object-cover object-center"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-2">
                       <span className="text-xs font-bold text-white bg-black/70 px-3 py-1.5 rounded-xl border border-white/20">
                         Click to change photo
                       </span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        className="text-xs font-bold text-red-200 bg-red-600/80 hover:bg-red-600 px-3 py-1.5 rounded-xl border border-red-400/40"
+                      >
+                        Remove Photo
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                      <Upload className="w-6 h-6" />
+                    <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                      <Upload className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white">Click or tap to upload a photo</p>
+                      <p className="text-xs font-bold text-white">Upload reference photo (Optional)</p>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        PNG, JPG, or WebP of your logo, store, signage, or printed menu
+                        Logo, storefront, food, or menu (or leave blank to design from prompt only)
                       </p>
                     </div>
                   </>
@@ -264,6 +345,12 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 pt-0.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                     <span>Visual Concept: {result.designConcept}</span>
+                  </div>
+                )}
+
+                {result.userPrompt && (
+                  <div className="text-[11px] opacity-80 italic">
+                    Prompt: &ldquo;{result.userPrompt}&rdquo;
                   </div>
                 )}
 
@@ -415,12 +502,20 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
               </button>
               <button
                 type="button"
-                disabled={!file || scanning}
+                disabled={(!file && !userPrompt.trim()) || scanning}
                 onClick={handleStartScan}
                 className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-purple-600/20 flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{scanning ? "Analyzing with AI..." : "Scan & Style with AI"}</span>
+                <span>
+                  {scanning
+                    ? "Designing with AI..."
+                    : file && userPrompt.trim()
+                    ? "Scan & Apply Prompt Style"
+                    : userPrompt.trim()
+                    ? "Generate Style from Prompt"
+                    : "Scan & Style Photo"}
+                </span>
               </button>
             </>
           )}

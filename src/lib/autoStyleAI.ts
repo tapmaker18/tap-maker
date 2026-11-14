@@ -10,6 +10,7 @@ import type {
 export interface AutoStyleResult {
   vibe: string;
   designConcept?: string;
+  userPrompt?: string;
   vibeExplanation?: string;
   tagline?: string;
   themeMode: "dark" | "light";
@@ -31,19 +32,26 @@ export interface AutoStyleResult {
 }
 
 /**
- * Sends an image (photo of shop, logo, dish, or business card) to the AI Auto-Style endpoint.
+ * Sends an image or a style prompt (or both) to the AI Auto-Style endpoint.
  * Analyzes the visual brand identity and returns an aesthetic palette & theme configuration.
+ * Supports an optional userPrompt to steer the visual design style, or run prompt-only without an image.
  */
 export async function scanAutoStyleWithAI(
-  imageFile: File,
-  customApiKey?: string
+  imageFile?: File | null,
+  customApiKey?: string,
+  userPrompt?: string
 ): Promise<AutoStyleResult> {
   const user = auth?.currentUser;
   if (!user) throw new Error("Please sign in before using AI Auto-Styling.");
 
+  if (!imageFile && !userPrompt?.trim()) {
+    throw new Error("Please provide either a photo or a style prompt.");
+  }
+
   const formData = new FormData();
-  formData.append("image", imageFile);
+  if (imageFile) formData.append("image", imageFile);
   if (customApiKey?.trim()) formData.append("apiKey", customApiKey.trim());
+  if (userPrompt?.trim()) formData.append("prompt", userPrompt.trim());
 
   const response = await fetch("/api/ai/auto-style", {
     method: "POST",
@@ -54,7 +62,7 @@ export async function scanAutoStyleWithAI(
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(
-      typeof data.error === "string" ? data.error : "Unable to analyze this image."
+      typeof data.error === "string" ? data.error : "Unable to analyze or generate theme."
     );
   }
 

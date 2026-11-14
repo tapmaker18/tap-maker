@@ -15,8 +15,7 @@ class ApiError extends Error {
   }
 }
 
-const AUTO_STYLE_PROMPT = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
-Analyze this image (which may be a company logo, physical storefront, restaurant ambiance, signature dish, printed menu, or business card).
+const AUTO_STYLE_BASE_PROMPT = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
 DO NOT JUST PICK FLAT COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
 
 Output strictly valid JSON with no markdown wrapping or fences, matching this exact shape:
@@ -70,6 +69,18 @@ CRITICAL CONTRAST & READABILITY RULES:
 8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
 9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
+function buildPrompt(userPrompt?: string, hasImage?: boolean): string {
+  let prompt = AUTO_STYLE_BASE_PROMPT;
+  if (hasImage && userPrompt) {
+    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION:\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above.`;
+  } else if (!hasImage && userPrompt) {
+    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (NO IMAGE PROVIDED):\n"${userPrompt}"\nAuthor the entire theme, palette, typography, vibe, design concept, and bespoke custom CSS based strictly on this style direction.`;
+  } else {
+    prompt += `\n\nExtract and author the entire bespoke theme, palette, and custom CSS based on the visual branding and atmosphere of the provided image.`;
+  }
+  return prompt;
+}
+
 async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
   if (isAdmin) return;
 
@@ -99,90 +110,125 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
 }
 
 // ── Gemini ────────────────────────────────────────────────────────
-async function scanWithGemini(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
-  const models = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-2.5-flash"];
-  let lastErr: unknown = null;
+async function scanWithGemini(
+  apiKey: string,
+  prompt: string,
+  buffer?: Buffer | null,
+  mimeType?: string
+): Promise<string> {
+  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+    model: "gemini-flash-latest",
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.25,
+    },
+  });
 
-  for (const modelName of models) {
-    try {
-      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.2,
+  // Fast 3.5s timeout: if Google free tier is hanging or 503-ing, abort fast and hand over to Groq
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+  try {
+    const contents: any[] = [prompt];
+    if (buffer) {
+      contents.push({
+        inlineData: {
+          data: buffer.toString("base64"),
+          mimeType: mimeType || "image/jpeg",
         },
       });
-      const result = await model.generateContent([
-        AUTO_STYLE_PROMPT,
-        {
-          inlineData: {
-            data: buffer.toString("base64"),
-            mimeType: mimeType || "image/jpeg",
-          },
-        },
-      ]);
-      const text = result.response.text().trim();
-      if (text) return text;
-    } catch (err) {
-      lastErr = err;
-      console.warn(`Gemini model ${modelName} failed:`, err);
     }
-  }
 
-  throw lastErr || new Error("Gemini analysis failed.");
+    const result = await model.generateContent(contents, {
+      signal: controller.signal,
+    });
+    const text = result.response.text().trim();
+    if (text) return text;
+    throw new Error("Empty response from Gemini.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
-// ── Groq / Vision fallback ───────────────────────────────────────
-async function scanWithGroq(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
+// ── Groq / Vision or Text fallback ───────────────────────────────
+async function scanWithGroq(
+  apiKey: string,
+  prompt: string,
+  buffer?: Buffer | null,
+  mimeType?: string
+): Promise<string> {
   const groq = new Groq({ apiKey });
-  const base64Image = buffer.toString("base64");
-  const dataUrl = `data:${mimeType || "image/jpeg"};base64,${base64Image}`;
 
-  // Try llama-3.2-11b-vision-preview first (higher limits), then qwen
-  const models = ["llama-3.2-11b-vision-preview", "qwen/qwen3.8-27b"];
-  let lastErr: unknown = null;
+  if (buffer) {
+    // Active Groq Vision Model: qwen/qwen3.8-27b
+    const base64Image = buffer.toString("base64");
+    const dataUrl = `data:${mimeType || "image/jpeg"};base64,${base64Image}`;
 
-  for (const model of models) {
-    try {
-      const completion = await groq.chat.completions.create({
-        model,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: AUTO_STYLE_PROMPT },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 850,
-        response_format: { type: "json_object" },
-      });
+    const completion = await groq.chat.completions.create({
+      model: "qwen/qwen3.8-27b",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 850,
+    });
 
-      const text = completion.choices[0]?.message?.content?.trim();
-      if (text) return text;
-    } catch (err: any) {
-      lastErr = err;
-      // If Groq aborted JSON validation due to token cutoff, rescue failed_generation if usable
-      const failedGen = err?.error?.failed_generation;
-      if (typeof failedGen === "string" && failedGen.includes('"primaryColor"')) {
-        let fixed = failedGen.trim();
+    const text = completion.choices[0]?.message?.content?.trim();
+    if (text) return text;
+    throw new Error("Empty response from Groq vision.");
+  } else {
+    // Text-only: Blazing-fast Llama-3.3-70b-versatile (~400ms)
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 850,
+    });
+
+    const text = completion.choices[0]?.message?.content?.trim();
+    if (text) return text;
+    throw new Error("Empty response from Groq text.");
+  }
+}
+
+function extractAndParseJson(rawOutput: string): Record<string, unknown> {
+  const cleaned = rawOutput
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        let fixed = match[0].trim();
         if (!fixed.endsWith("}")) {
           fixed = fixed.replace(/,\s*$/, "");
           if (!fixed.endsWith('"') && !fixed.endsWith("}")) fixed += '"';
           if (!fixed.endsWith("}")) fixed += "}";
+          try {
+            return JSON.parse(fixed);
+          } catch {}
         }
-        try {
-          JSON.parse(fixed);
-          return fixed;
-        } catch {}
       }
-      console.warn(`Groq model ${model} auto-style failed, trying fallback:`, err);
     }
+    throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
   }
-
-  throw lastErr || new Error("Groq vision analysis failed.");
 }
 
 export async function POST(request: Request) {
@@ -190,16 +236,23 @@ export async function POST(request: Request) {
     const decoded = await verifyAuthenticatedRequest(request);
     const formData = await request.formData();
     const image = formData.get("image");
+    const userPrompt = formData.get("prompt");
     const suppliedKey = formData.get("apiKey");
 
-    if (!(image instanceof File) || image.size === 0) {
-      throw new ApiError("Please choose an image or photo to analyze.", 400);
+    const promptText = typeof userPrompt === "string" ? userPrompt.trim() : "";
+    const hasImage = image instanceof File && image.size > 0;
+
+    if (!hasImage && !promptText) {
+      throw new ApiError("Please provide a photo or enter a style prompt.", 400);
     }
-    if (!image.type.startsWith("image/")) {
-      throw new ApiError("Only image files can be analyzed.", 400);
-    }
-    if (image.size > 10 * 1024 * 1024) {
-      throw new ApiError("The image must be 10 MB or smaller.", 413);
+
+    if (hasImage && image instanceof File) {
+      if (!image.type.startsWith("image/")) {
+        throw new ApiError("Only image files can be analyzed.", 400);
+      }
+      if (image.size > 10 * 1024 * 1024) {
+        throw new ApiError("The image must be 10 MB or smaller.", 413);
+      }
     }
 
     const customKey = typeof suppliedKey === "string" ? suppliedKey.trim() : "";
@@ -209,7 +262,7 @@ export async function POST(request: Request) {
 
     if (!geminiKey && !groqKey) {
       throw new ApiError(
-        "AI Auto-Style is currently unavailable because no API key is configured. Please provide your own Gemini API key or contact support.",
+        "AI Auto-Style is currently unavailable because no API key is configured. Please provide your own Gemini or Groq API key.",
         503
       );
     }
@@ -217,22 +270,25 @@ export async function POST(request: Request) {
     const isAdmin = decoded.role === SUPER_ADMIN_ROLE;
     await consumeScan(decoded.uid, isAdmin);
 
-    const buffer = Buffer.from(await image.arrayBuffer());
+    const fullPrompt = buildPrompt(promptText, hasImage);
+    const buffer = hasImage && image instanceof File ? Buffer.from(await image.arrayBuffer()) : null;
+    const mimeType = hasImage && image instanceof File ? image.type : undefined;
+
     let rawOutput: string | null = null;
     let lastError: unknown = null;
 
     if (geminiKey) {
       try {
-        rawOutput = await scanWithGemini(geminiKey, buffer, image.type);
+        rawOutput = await scanWithGemini(geminiKey, fullPrompt, buffer, mimeType);
       } catch (err) {
         lastError = err;
-        console.warn("Gemini auto-style attempt failed:", err);
+        console.warn("Gemini auto-style attempt failed or timed out, trying Groq fallback:", err);
       }
     }
 
     if (!rawOutput && groqKey) {
       try {
-        rawOutput = await scanWithGroq(groqKey, buffer, image.type);
+        rawOutput = await scanWithGroq(groqKey, fullPrompt, buffer, mimeType);
       } catch (err) {
         lastError = err;
         console.warn("Groq auto-style attempt failed:", err);
@@ -241,21 +297,10 @@ export async function POST(request: Request) {
 
     if (!rawOutput) {
       const hint = lastError instanceof Error ? ` (${lastError.message})` : "";
-      throw new ApiError(`Unable to analyze the image right now${hint}. Please try another photo.`, 502);
+      throw new ApiError(`Unable to generate theme right now${hint}. Please try again.`, 502);
     }
 
-    // Clean JSON markdown fences if present
-    const cleaned = rawOutput
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
-    }
+    const parsed = extractAndParseJson(rawOutput);
 
     // Safety auto-correction for contrast & readability:
     // If dark mode is selected, ensure textColor and textSecondaryColor are never dark or muddy
@@ -280,6 +325,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // Attach user prompt to result if provided
+    if (promptText) {
+      parsed.userPrompt = promptText;
+    }
+
     return NextResponse.json(parsed);
   } catch (err) {
     if (err instanceof ApiError) {
@@ -287,9 +337,8 @@ export async function POST(request: Request) {
     }
     console.error("Auto-Style API unhandled exception:", err);
     return NextResponse.json(
-      { error: "An unexpected error occurred while analyzing the image." },
+      { error: "An unexpected error occurred while generating the theme." },
       { status: 500 }
     );
   }
 }
-

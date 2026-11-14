@@ -15,6 +15,8 @@ import {
   Check,
   RotateCcw,
   Code2,
+  Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   ThemeSettings,
@@ -22,21 +24,70 @@ import {
   BgPatternType,
   GlassBlurIntensity,
 } from "@/lib/types";
+import { AutoStyleResult, scanAutoStyleWithAI } from "@/lib/autoStyleAI";
+import { getGeminiApiKey } from "@/lib/menuAI";
 
 interface VisualDesignStudioPanelProps {
   themeSettings: ThemeSettings;
   onChange: (patch: Partial<ThemeSettings>) => void;
   onOpenAiAutoStyle?: () => void;
+  onApplyResult?: (result: AutoStyleResult) => void;
 }
 
 export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = ({
   themeSettings,
   onChange,
   onOpenAiAutoStyle,
+  onApplyResult,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<
     "filters" | "atmosphere" | "typography" | "badges" | "customCss"
   >("filters");
+
+  // Inline AI Style Prompt State
+  const [inlineStudioPrompt, setInlineStudioPrompt] = useState("");
+  const [inlineStudioLoading, setInlineStudioLoading] = useState(false);
+  const [inlineStudioError, setInlineStudioError] = useState<string | null>(null);
+
+  const handleApplyInlineStudioPrompt = async (promptOverride?: string) => {
+    const text = (promptOverride || inlineStudioPrompt).trim();
+    if (!text) return;
+    try {
+      setInlineStudioLoading(true);
+      setInlineStudioError(null);
+      const res = await scanAutoStyleWithAI(null, getGeminiApiKey() || undefined, text);
+      if (onApplyResult) {
+        onApplyResult(res);
+      } else {
+        onChange({
+          preset: res.vibe,
+          themeMode: res.themeMode,
+          accentColor: res.primaryColor,
+          secondaryAccent: res.secondaryAccent,
+          color1: res.primaryColor,
+          color2: res.secondaryAccent,
+          bgPrimary: res.bgPrimary,
+          bgSecondary: res.bgSecondary,
+          cardBg: res.cardBg,
+          borderColor: res.borderColor,
+          textColor: res.textColor,
+          textSecondaryColor: res.textSecondaryColor,
+          fontFamily: res.fontFamily,
+          buttonRadius: res.buttonRadius,
+          imageFilter: res.imageFilter || "none",
+          bgPattern: res.bgPattern || "none",
+          designConcept: res.designConcept || res.vibe,
+          customCss: res.customCss || "",
+        });
+      }
+      setInlineStudioPrompt("");
+    } catch (err: any) {
+      console.error("Inline studio AI styling failed:", err);
+      setInlineStudioError(err?.message || "Failed to generate design from prompt.");
+    } finally {
+      setInlineStudioLoading(false);
+    }
+  };
 
   const filterPresets: {
     id: ImageFilterPreset;
@@ -515,6 +566,91 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
               )}
             </div>
           )}
+
+          {/* Inline Style Prompt Redesign Box */}
+          <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>Prompt AI to Redesign Theme &amp; CSS</span>
+              </label>
+              {onOpenAiAutoStyle && (
+                <button
+                  type="button"
+                  onClick={onOpenAiAutoStyle}
+                  className="text-[10px] text-purple-400 hover:text-purple-300 underline flex items-center gap-1"
+                >
+                  <ImageIcon className="w-3 h-3" />
+                  <span>Upload photo instead</span>
+                </button>
+              )}
+            </div>
+
+            {inlineStudioError && (
+              <div className="text-[11px] text-red-300 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl">
+                {inlineStudioError}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inlineStudioPrompt}
+                onChange={(e) => setInlineStudioPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !inlineStudioLoading) {
+                    e.preventDefault();
+                    handleApplyInlineStudioPrompt();
+                  }
+                }}
+                placeholder="e.g. Modern executive glassmorphism with cyan & gold accents..."
+                className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
+              />
+              <button
+                type="button"
+                disabled={!inlineStudioPrompt.trim() || inlineStudioLoading}
+                onClick={() => handleApplyInlineStudioPrompt()}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 active:scale-95 shadow-md shadow-purple-600/20"
+              >
+                {inlineStudioLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Designing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Apply Prompt</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Preset Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
+              {[
+                "✨ Executive Luxury & Gold",
+                "⚡ Cyberpunk Neon Glow",
+                "🌿 Clean Botanical Pastel",
+                "☕ Warm Artisan Roasted",
+                "🖤 Minimalist Monochrome",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={inlineStudioLoading}
+                  onClick={() => {
+                    setInlineStudioPrompt(preset);
+                    handleApplyInlineStudioPrompt(preset);
+                  }}
+                  className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-purple-600/20 hover:border-purple-500/40 border border-slate-700/60 text-slate-300 hover:text-white transition-all text-left"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* CSS Code Editor / Live Textarea */}
           <div className="flex flex-col gap-2">
