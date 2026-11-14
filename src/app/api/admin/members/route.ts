@@ -52,6 +52,8 @@ export async function POST(request: Request) {
         return jsonError("Password must be at least 6 characters.");
       }
 
+      const allowAiPageBuilder = Boolean(body.allowAiPageBuilder);
+
       const createdUser = await auth.createUser({ email, password });
       const now = new Date().toISOString();
       const member: MemberAccount = {
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
         aiScansLimit,
         aiScansUsed: 0,
         cardTokensLimit,
+        allowAiPageBuilder,
         createdAt: now,
         approvedAt: now,
       };
@@ -94,6 +97,12 @@ export async function POST(request: Request) {
       if (status === "approved") updates.approvedAt = new Date().toISOString();
       await db.collection("users").doc(uid).update(updates);
       return NextResponse.json({ ok: true });
+    }
+
+    if (action === "set-ai-builder") {
+      const allowed = Boolean(body.allowed);
+      await db.collection("users").doc(uid).update({ allowAiPageBuilder: allowed });
+      return NextResponse.json({ ok: true, allowAiPageBuilder: allowed });
     }
 
     if (action === "set-card-tokens") {

@@ -192,6 +192,13 @@ export async function addMemberCardTokens(uid: string, count: number = 1): Promi
 }
 
 // ============================================================
+// Toggle AI Page/Button Builder Permission (Admin)
+// ============================================================
+export async function toggleMemberAiBuilder(uid: string, allowed: boolean): Promise<void> {
+  await callAdminMembersApi({ action: "set-ai-builder", uid, allowed });
+}
+
+// ============================================================
 // Delete Member Account
 // ============================================================
 export async function deleteMemberAccount(uid: string): Promise<void> {
@@ -209,6 +216,7 @@ export async function createMemberByAdmin(params: {
   orderRef?: string;
   aiScansLimit?: number;
   cardTokensLimit?: number;
+  allowAiPageBuilder?: boolean;
 }): Promise<MemberAccount> {
   const result = await callAdminMembersApi<{ member: MemberAccount }>({
     action: "create",
@@ -219,6 +227,7 @@ export async function createMemberByAdmin(params: {
     orderRef: params.orderRef || "",
     aiScansLimit: params.aiScansLimit || 5,
     cardTokensLimit: params.cardTokensLimit || 1,
+    allowAiPageBuilder: Boolean(params.allowAiPageBuilder),
   });
   return result.member;
 }

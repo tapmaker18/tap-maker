@@ -48,10 +48,24 @@ export default function EditorPage() {
 
   const handleApplyAiStyle = (result: AutoStyleResult) => {
     if (!profile) return;
+
+    const newLinks = (result.suggestedButtons || []).map((btn, idx) => ({
+      id: `link-${Date.now()}-${idx}`,
+      title: btn.title,
+      url: btn.url || "https://",
+      platform: btn.platform || "website",
+      category: btn.category || "featured",
+      badge: btn.badge || null,
+      isActive: true,
+      isHighlighted: Boolean(btn.isHighlighted),
+      sortOrder: (profile.links?.length || 0) + idx,
+    }));
+
     setProfile({
       ...profile,
       templateId: result.suggestedTemplate || profile.templateId,
       subtitle: profile.subtitle || result.tagline || "",
+      links: newLinks.length > 0 ? [...profile.links, ...newLinks] : profile.links,
       themeSettings: {
         ...profile.themeSettings,
         preset: result.vibe,
@@ -81,7 +95,8 @@ export default function EditorPage() {
     });
   };
 
-  const { user, loading: authLoading, signOut, isAdmin, isPending, isSuspended } = useAuth();
+  const { user, memberAccount, loading: authLoading, signOut, isAdmin, isPending, isSuspended } = useAuth();
+  const canUseAiPageBuilder = isAdmin || Boolean(memberAccount?.allowAiPageBuilder);
 
   useEffect(() => {
     if (authLoading) return;
@@ -395,6 +410,7 @@ export default function EditorPage() {
                 }
                 onOpenAiAutoStyle={() => setAiModalOpen(true)}
                 onApplyResult={handleApplyAiStyle}
+                canUseAiPageBuilder={canUseAiPageBuilder}
               />
             )}
 
@@ -513,6 +529,7 @@ export default function EditorPage() {
         onClose={() => setAiModalOpen(false)}
         onApply={handleApplyAiStyle}
         targetType="profile"
+        canUseAiPageBuilder={canUseAiPageBuilder}
       />
     </div>
   );

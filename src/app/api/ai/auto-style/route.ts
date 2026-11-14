@@ -65,7 +65,12 @@ CRITICAL CONTRAST & READABILITY RULES:
 8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
 9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
-function buildPrompt(userPrompt?: string, hasImage?: boolean): string {
+function buildPrompt(
+  userPrompt?: string,
+  hasImage?: boolean,
+  mode: "theme_only" | "full" = "theme_only",
+  targetType: "profile" | "menu" = "profile"
+): string {
   let prompt = AUTO_STYLE_BASE_PROMPT;
   if (hasImage && userPrompt) {
     prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above. Understand their aesthetic vision in any language.`;
@@ -74,6 +79,34 @@ function buildPrompt(userPrompt?: string, hasImage?: boolean): string {
   } else {
     prompt += `\n\nExtract and author the entire bespoke theme, palette, and custom CSS based on the visual branding and atmosphere of the provided image.`;
   }
+
+  if (mode === "full") {
+    if (targetType === "profile") {
+      prompt += `\n\nAI BUTTON & COMPONENT BUILDER ACTIVATED:
+In addition to the visual theme, you MUST ALSO GENERATE 2 to 5 actual clickable link buttons in "suggestedButtons" matching the user's prompt or brand identity.
+Each button in "suggestedButtons" must follow this exact shape:
+{
+  "title": "Button Title (e.g. Order via GrabFood, Shopee Store, Follow on Instagram, Book Appointment)",
+  "url": "https://shopee.ph/store or https://instagram.com/brand or #",
+  "platform": "instagram" | "facebook" | "shopee" | "lazada" | "tiktok" | "spotify" | "youtube" | "whatsapp" | "phone" | "email" | "website" | "custom",
+  "category": "featured" | "social" | "contact" | "products" | "other",
+  "badge": "Short badge (e.g. 'Order Now', 'Bestseller', 'New', '20% Off', 'Book') or null",
+  "isHighlighted": true or false
+}`;
+    } else {
+      prompt += `\n\nAI MENU ACTION BUTTON BUILDER ACTIVATED:
+In addition to the visual theme, you MUST ALSO GENERATE 2 to 4 quick action buttons in "suggestedActionButtons" matching the restaurant/cafe prompt (e.g. Reserve Table, Order on Grab, Call Waiter, Connect to WiFi, WhatsApp).
+Each button in "suggestedActionButtons" must follow this exact shape:
+{
+  "title": "Button Title (e.g. Reserve Table, Order Delivery, Connect to WiFi)",
+  "url": "https://wa.me/639123456789 or https://food.grab.com or #",
+  "icon": "calendar" | "phone" | "shopping-bag" | "instagram" | "facebook" | "globe" | "message-circle",
+  "badge": "e.g. 'Fast', 'Free WiFi', 'Promo' or null",
+  "isPrimary": true or false
+}`;
+    }
+  }
+
   return prompt;
 }
 
@@ -289,7 +322,23 @@ export async function POST(request: Request) {
     const isAdmin = decoded.role === SUPER_ADMIN_ROLE;
     await consumeScan(decoded.uid, isAdmin);
 
-    const fullPrompt = buildPrompt(promptText, hasImage);
+    const requestedMode = (formData.get("mode") as string) === "full" ? "full" : "theme_only";
+    const targetType = (formData.get("targetType") as string) === "menu" ? "menu" : "profile";
+
+    // Permission check: default to visual theme only unless Super Admin granted allowAiPageBuilder
+    let effectiveMode: "theme_only" | "full" = "theme_only";
+    if (requestedMode === "full") {
+      if (isAdmin) {
+        effectiveMode = "full";
+      } else {
+        const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
+        if (userDoc.exists && userDoc.data()?.allowAiPageBuilder === true) {
+          effectiveMode = "full";
+        }
+      }
+    }
+
+    const fullPrompt = buildPrompt(promptText, hasImage, effectiveMode, targetType);
     const buffer = hasImage && image instanceof File ? Buffer.from(await image.arrayBuffer()) : null;
     const mimeType = hasImage && image instanceof File ? image.type : undefined;
 
@@ -344,10 +393,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Attach user prompt to result if provided
+    // Attach user prompt and effective builder mode to result
     if (promptText) {
       parsed.userPrompt = promptText;
     }
+    parsed.builderMode = effectiveMode;
 
     return NextResponse.json(parsed);
   } catch (err) {

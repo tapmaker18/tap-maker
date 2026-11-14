@@ -220,6 +220,34 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
               </div>
             )}
           </div>
+
+          {/* AI Custom Action Buttons */}
+          {menu.actionButtons && menu.actionButtons.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-slate-800/60">
+              {menu.actionButtons.map((btn) => (
+                <a
+                  key={btn.id}
+                  href={isPreview ? undefined : btn.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 active:scale-95 ${
+                    btn.isPrimary
+                      ? "text-white shadow-md shadow-emerald-950/20"
+                      : "bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-200"
+                  }`}
+                  style={btn.isPrimary ? { backgroundColor: accentColor } : undefined}
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300 flex-shrink-0" />
+                  <span>{btn.title}</span>
+                  {btn.badge && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white font-mono">
+                      {btn.badge}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 

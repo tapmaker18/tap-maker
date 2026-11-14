@@ -5,12 +5,15 @@ import type {
   TemplateId,
   ImageFilterPreset,
   BgPatternType,
+  PlatformType,
+  MenuActionButton,
 } from "./types";
 
 export interface AutoStyleResult {
   vibe: string;
   designConcept?: string;
   userPrompt?: string;
+  builderMode?: "theme_only" | "full";
   vibeExplanation?: string;
   tagline?: string;
   themeMode: "dark" | "light";
@@ -29,17 +32,36 @@ export interface AutoStyleResult {
   imageFilter?: ImageFilterPreset;
   bgPattern?: BgPatternType;
   customCss?: string;
+  // AI Page Builder additions:
+  suggestedButtons?: {
+    title: string;
+    url?: string;
+    platform?: PlatformType;
+    category?: "music" | "social" | "contact" | "featured" | "products" | "other";
+    badge?: string | null;
+    isHighlighted?: boolean;
+  }[];
+  suggestedActionButtons?: {
+    title: string;
+    url: string;
+    icon?: string;
+    badge?: string;
+    isPrimary?: boolean;
+  }[];
 }
 
 /**
  * Sends an image or a style prompt (or both) to the AI Auto-Style endpoint.
  * Analyzes the visual brand identity and returns an aesthetic palette & theme configuration.
  * Supports an optional userPrompt to steer the visual design style, or run prompt-only without an image.
+ * When mode === "full", AI creates both visual theme AND actual buttons/components (subject to Super Admin permission).
  */
 export async function scanAutoStyleWithAI(
   imageFile?: File | null,
   customApiKey?: string,
-  userPrompt?: string
+  userPrompt?: string,
+  mode: "theme_only" | "full" = "theme_only",
+  targetType: "profile" | "menu" = "profile"
 ): Promise<AutoStyleResult> {
   const user = auth?.currentUser;
   if (!user) throw new Error("Please sign in before using AI Auto-Styling.");
@@ -52,6 +74,8 @@ export async function scanAutoStyleWithAI(
   if (imageFile) formData.append("image", imageFile);
   if (customApiKey?.trim()) formData.append("apiKey", customApiKey.trim());
   if (userPrompt?.trim()) formData.append("prompt", userPrompt.trim());
+  formData.append("mode", mode);
+  formData.append("targetType", targetType);
 
   const response = await fetch("/api/ai/auto-style", {
     method: "POST",

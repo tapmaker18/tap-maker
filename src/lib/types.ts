@@ -197,6 +197,15 @@ export interface MenuContactInfo {
   website?: string;
 }
 
+export interface MenuActionButton {
+  id: string;
+  title: string;
+  url: string;
+  icon?: string;
+  badge?: string;
+  isPrimary?: boolean;
+}
+
 export interface Menu {
   id: string;
   slug: string;
@@ -207,6 +216,7 @@ export interface Menu {
   categories: MenuCategory[];
   themeSettings: MenuThemeSettings;
   contactInfo: MenuContactInfo;
+  actionButtons?: MenuActionButton[];
   status: "draft" | "published";
   userId: string;
   createdAt: string;
@@ -231,6 +241,7 @@ export interface MemberAccount {
   aiScansLimit: number;
   aiScansUsed: number;
   cardTokensLimit?: number;
+  allowAiPageBuilder?: boolean; // Super Admin permission toggle: allows AI button & component builder
   createdAt: string;
   approvedAt?: string | null;
   lastLoginAt?: string | null;

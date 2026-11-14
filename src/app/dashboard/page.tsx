@@ -28,6 +28,7 @@ import {
   createMemberByAdmin,
   setMemberCardTokens,
   addMemberCardTokens,
+  toggleMemberAiBuilder,
 } from "@/lib/userStorage";
 import { MemberAccount, AccountStatus } from "@/lib/types";
 import {
@@ -118,6 +119,7 @@ export default function DashboardPage() {
     orderRef: "",
     aiScansLimit: 5,
     cardTokensLimit: 1,
+    allowAiPageBuilder: false,
   });
   const [addAccountLoading, setAddAccountLoading] = useState(false);
   const [addAccountMsg, setAddAccountMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -207,6 +209,15 @@ export default function DashboardPage() {
     await loadMembers();
   };
 
+  const handleToggleAiBuilder = async (uid: string, allowed: boolean) => {
+    try {
+      await toggleMemberAiBuilder(uid, allowed);
+      await loadMembers();
+    } catch (err: any) {
+      alert(err?.message || "Failed to update AI builder permission");
+    }
+  };
+
   const handleDeleteMember = async (uid: string, name: string) => {
     if (confirm(`Are you sure you want to delete account "${name}"? This cannot be undone.`)) {
       await deleteMemberAccount(uid);
@@ -235,6 +246,7 @@ export default function DashboardPage() {
           orderRef: "",
           aiScansLimit: 5,
           cardTokensLimit: 1,
+          allowAiPageBuilder: false,
         });
         setAddAccountMsg(null);
       }, 1200);
@@ -1671,6 +1683,22 @@ export default function DashboardPage() {
                                 </button>
                               )}
 
+                              {/* AI Page/Button Builder Permission Toggle */}
+                              {!isSuperAdminAccount && (
+                                <button
+                                  onClick={() => handleToggleAiBuilder(m.uid, !m.allowAiPageBuilder)}
+                                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-all ${
+                                    m.allowAiPageBuilder
+                                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30"
+                                      : "bg-slate-800 text-slate-400 border border-slate-700 hover:text-slate-200"
+                                  }`}
+                                  title="Toggle AI Page & Button Builder permission (Full AI design vs Visual theme only)"
+                                >
+                                  <Sparkles className={`w-3 h-3 ${m.allowAiPageBuilder ? "text-purple-400" : "text-slate-500"}`} />
+                                  <span>AI Builder: {m.allowAiPageBuilder ? "Full Builder (ON)" : "Theme Only (Default)"}</span>
+                                </button>
+                              )}
+
                               {/* Inspect Profiles & Menus */}
                               <button
                                 onClick={() => {
@@ -1880,6 +1908,29 @@ export default function DashboardPage() {
                   />
                   <p className="text-[10px] text-slate-500 mt-1">Free OCR scans</p>
                 </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Full AI Page &amp; Button Builder</span>
+                  </span>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Allow client to generate actual buttons &amp; layout via AI prompt (Default: unchecked / theme only)
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={addAccountForm.allowAiPageBuilder}
+                  onChange={(e) =>
+                    setAddAccountForm({
+                      ...addAccountForm,
+                      allowAiPageBuilder: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer"
+                />
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
