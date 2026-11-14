@@ -43,20 +43,16 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
 }
 
 CUSTOM CSS DESIGN INSTRUCTIONS:
-Author 10 to 25 lines of elegant, creative, high-impact CSS rules in "customCss".
+Author 5 to 8 concise, high-impact CSS rules in "customCss".
 Make sure every property has !important so it overrides framework defaults cleanly.
-Use the following target classes:
-- .tmaker-profile-root, .tmaker-menu-root : Page canvas (give it unique radial ambient lighting spotlight at the top reflecting the primary color, e.g. radial-gradient(circle at 50% 12%, [primaryColor]25 0%, transparent 60%), [bgPrimary] !important)
-- .tmaker-card, .tmaker-menu-item-card : Main card containers (give them distinctive borders, glassmorphism backdrop-blur: 20px, custom border-radius: 28px, deep box-shadows with subtle primary color glow)
-- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (custom box-shadow glow ring with primary color, smooth hover scale)
-- .tmaker-name, .tmaker-menu-title : Brand/person title (pure white #ffffff, letter-spacing: -0.02em, subtle text-shadow with primary color glow)
-- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline (pill with subtle primary color background tint, glowing border, crisp readable text)
-- .tmaker-bio : Bio text (crisp readable light color #e2e8f0, never dark or muddy)
-- .tmaker-link-item : Profile link buttons (subtle glass background, border highlight, smooth hover translateY(-3px) and glow on hover)
-- .tmaker-action-btn : Primary action buttons (Save Contact, Call store)
-- .tmaker-badge, .tmaker-menu-badge : Custom badge or ribbon (metallic gradient, neon tag, or frosted pill)
-- .tmaker-menu-category-btn : Menu category navigation pills
-- .tmaker-menu-item-price : Dish price tag styling
+Focus on these key target classes:
+- .tmaker-profile-root, .tmaker-menu-root : Page canvas (e.g. radial ambient spotlight at top)
+- .tmaker-card, .tmaker-menu-item-card : Main card containers (backdrop-blur, borders, shadows)
+- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (accent border, glow)
+- .tmaker-name, .tmaker-menu-title : Brand/person title (color, letter-spacing)
+- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline
+- .tmaker-link-item, .tmaker-action-btn : Link/action buttons (colors, hover glow)
+Keep "customCss" compact and concise so the JSON response completes without truncation.
 
 CRITICAL CONTRAST & READABILITY RULES:
 1. textColor MUST ALWAYS be #ffffff or #f8fafc on dark themeMode. NEVER generate dark brown, dark gray, or low-contrast text.
@@ -219,27 +215,36 @@ function extractAndParseJson(rawOutput: string): Record<string, unknown> {
     return JSON.parse(cleaned);
   } catch {}
 
-  // Extract the outermost { ... } block
   const firstBrace = cleaned.indexOf("{");
-  const lastBrace = cleaned.lastIndexOf("}");
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    const jsonCandidate = cleaned.substring(firstBrace, lastBrace + 1);
-    try {
-      return JSON.parse(jsonCandidate);
-    } catch {
-      // Try to fix truncated JSON
-      let fixed = jsonCandidate.trim();
-      // Remove trailing comma
-      fixed = fixed.replace(/,\s*$/, "");
-      // Attempt closing
-      if (!fixed.endsWith("}")) {
-        if (!fixed.endsWith('"') && !fixed.endsWith("}")) fixed += '"';
-        fixed += "}";
-      }
+  if (firstBrace !== -1) {
+    const candidate = cleaned.substring(firstBrace);
+
+    // Try parsing candidate directly or up to last brace
+    const lastBrace = candidate.lastIndexOf("}");
+    if (lastBrace > 0) {
       try {
-        return JSON.parse(fixed);
+        return JSON.parse(candidate.substring(0, lastBrace + 1));
       } catch {}
     }
+
+    // If truncated inside customCss string, trim back to the last complete CSS rule ending with semicolon
+    const lastSemi = candidate.lastIndexOf(";");
+    if (lastSemi > 0) {
+      try {
+        const rescued = candidate.substring(0, lastSemi + 1) + '" }';
+        return JSON.parse(rescued);
+      } catch {}
+    }
+
+    // Try counting unescaped quotes and closing braces
+    let testStr = (lastBrace > 0 ? candidate.substring(0, lastBrace + 1) : candidate).trim();
+    testStr = testStr.replace(/,\s*$/, "");
+    const quoteCount = (testStr.match(/(?<!\\)"/g) || []).length;
+    if (quoteCount % 2 !== 0) testStr += '"';
+    if (!testStr.endsWith("}")) testStr += "}";
+    try {
+      return JSON.parse(testStr);
+    } catch {}
   }
 
   throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
