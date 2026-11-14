@@ -188,8 +188,12 @@ async function scanWithGroq(
       model: "qwen/qwen3.8-27b",
       messages: [
         {
+          role: "system",
+          content: "You are a JSON-only API. Output ONLY raw valid JSON with no markdown fences, no explanation, no thinking tags. Do not use <think> tags.",
+        },
+        {
           role: "user",
-          content: prompt,
+          content: prompt + "\n\n/no_think",
         },
       ],
       temperature: 0.2,
@@ -203,32 +207,42 @@ async function scanWithGroq(
 }
 
 function extractAndParseJson(rawOutput: string): Record<string, unknown> {
-  const cleaned = rawOutput
+  // Strip qwen thinking tags: <think>...</think>
+  let cleaned = rawOutput
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
 
+  // Try direct parse first
   try {
     return JSON.parse(cleaned);
-  } catch {
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch {
-        let fixed = match[0].trim();
-        if (!fixed.endsWith("}")) {
-          fixed = fixed.replace(/,\s*$/, "");
-          if (!fixed.endsWith('"') && !fixed.endsWith("}")) fixed += '"';
-          if (!fixed.endsWith("}")) fixed += "}";
-          try {
-            return JSON.parse(fixed);
-          } catch {}
-        }
+  } catch {}
+
+  // Extract the outermost { ... } block
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    const jsonCandidate = cleaned.substring(firstBrace, lastBrace + 1);
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch {
+      // Try to fix truncated JSON
+      let fixed = jsonCandidate.trim();
+      // Remove trailing comma
+      fixed = fixed.replace(/,\s*$/, "");
+      // Attempt closing
+      if (!fixed.endsWith("}")) {
+        if (!fixed.endsWith('"') && !fixed.endsWith("}")) fixed += '"';
+        fixed += "}";
       }
+      try {
+        return JSON.parse(fixed);
+      } catch {}
     }
-    throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
   }
+
+  throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
 }
 
 export async function POST(request: Request) {
