@@ -183,9 +183,9 @@ async function scanWithGroq(
     if (text) return text;
     throw new Error("Empty response from Groq vision.");
   } else {
-    // Text-only: Blazing-fast Llama-3.3-70b-versatile (~400ms)
+    // Text-only prompt (no image): use qwen which is confirmed active on Groq
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       messages: [
         {
           role: "user",
