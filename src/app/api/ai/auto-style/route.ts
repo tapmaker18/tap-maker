@@ -68,9 +68,9 @@ CRITICAL CONTRAST & READABILITY RULES:
 function buildPrompt(userPrompt?: string, hasImage?: boolean): string {
   let prompt = AUTO_STYLE_BASE_PROMPT;
   if (hasImage && userPrompt) {
-    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION:\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above.`;
+    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above. Understand their aesthetic vision in any language.`;
   } else if (!hasImage && userPrompt) {
-    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (NO IMAGE PROVIDED):\n"${userPrompt}"\nAuthor the entire theme, palette, typography, vibe, design concept, and bespoke custom CSS based strictly on this style direction.`;
+    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nAuthor the entire theme, palette, typography, vibe, design concept, and bespoke custom CSS based strictly on this style direction. Understand their aesthetic vision in any language.`;
   } else {
     prompt += `\n\nExtract and author the entire bespoke theme, palette, and custom CSS based on the visual branding and atmosphere of the provided image.`;
   }

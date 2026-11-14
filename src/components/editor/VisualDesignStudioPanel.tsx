@@ -603,7 +603,7 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
                     handleApplyInlineStudioPrompt();
                   }
                 }}
-                placeholder="e.g. Modern executive glassmorphism with cyan & gold accents..."
+                placeholder="e.g. Modern executive glassmorphism, o aesthetic na cafe na may kahoy at ginto..."
                 className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
               />
               <button

@@ -1874,7 +1874,7 @@ export default function MenuEditorPage() {
                           handleApplyInlineMenuPrompt();
                         }
                       }}
-                      placeholder="e.g. Modern botanical cafe with warm terracotta and sage accents..."
+                      placeholder="e.g. Mamahaling BGC cafe na may kahoy at ginto, Cyberpunk neon, o Rustic Italian..."
                       className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
                     />
                     <button

@@ -191,7 +191,7 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
                   rows={2}
-                  placeholder="e.g. Luxury VIP gold & midnight charcoal lounge, Japanese minimalist cafe, Cyberpunk neon street..."
+                  placeholder="e.g. Mamahaling lounge na may ginto at itim, Maaliwalas na aesthetic cafe, o Cyberpunk neon..."
                   className="w-full text-xs bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all resize-none leading-relaxed"
                 />
 
