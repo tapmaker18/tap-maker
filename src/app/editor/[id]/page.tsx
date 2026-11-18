@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Profile, TemplateId } from "@/lib/types";
+import { Profile, TemplateId, PlatformType } from "@/lib/types";
 import { getProfileById, saveProfile, isSlugAvailable } from "@/lib/storage";
 import { ProfileInfoPanel } from "@/components/editor/ProfileInfoPanel";
 import { LinksManagerPanel } from "@/components/editor/LinksManagerPanel";
@@ -49,11 +49,30 @@ export default function EditorPage() {
   const handleApplyAiStyle = (result: AutoStyleResult) => {
     if (!profile) return;
 
-    const newLinks = (result.suggestedButtons || []).map((btn, idx) => ({
+    const sourceButtons =
+      result.suggestedButtons && result.suggestedButtons.length > 0
+        ? result.suggestedButtons
+        : (result.suggestedActionButtons || []).map((b) => ({
+            title: b.title,
+            url: b.url || "https://",
+            platform:
+              b.icon === "instagram"
+                ? "instagram"
+                : b.icon === "facebook"
+                ? "facebook"
+                : b.icon === "phone"
+                ? "phone"
+                : "website",
+            category: "featured" as const,
+            badge: b.badge || null,
+            isHighlighted: Boolean(b.isPrimary),
+          }));
+
+    const newLinks = sourceButtons.map((btn, idx) => ({
       id: `link-${Date.now()}-${idx}`,
       title: btn.title,
       url: btn.url || "https://",
-      platform: btn.platform || "website",
+      platform: (btn.platform || "website") as PlatformType,
       category: btn.category || "featured",
       badge: btn.badge || null,
       isActive: true,

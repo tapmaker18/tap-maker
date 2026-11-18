@@ -15,7 +15,13 @@ class ApiError extends Error {
   }
 }
 
-const AUTO_STYLE_BASE_PROMPT = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
+function buildPrompt(
+  userPrompt?: string,
+  hasImage?: boolean,
+  mode: "theme_only" | "full" = "theme_only",
+  targetType: "profile" | "menu" = "profile"
+): string {
+  let prompt = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
 DO NOT JUST PICK FLAT COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
 
 Output strictly valid JSON with no markdown wrapping or fences, matching this exact shape:
@@ -23,7 +29,55 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   "designConcept": "A distinct creative design title (e.g. 'Artisan Roast & Velvet Wood', 'Tokyo Cyberpunk Hologram', 'Minimalist Scandinavian Bistro', 'Luxe Gold Leaf Executive', 'Sun-Drenched Coastal Bistro', 'Neo-Brutalist Bold Streetwear')",
   "vibe": "Short 2-4 word aesthetic description",
   "vibeExplanation": "1-2 sentences explaining why this visual design, lighting, and mood embody this brand",
-  "tagline": "A punchy, attractive tagline or brand slogan",
+  "tagline": "A punchy, attractive tagline or brand slogan",`;
+
+  if (mode === "full") {
+    if (targetType === "menu") {
+      prompt += `
+  "suggestedActionButtons": [
+    {
+      "title": "Button Title (e.g. Reserve Table, Order on Grab, Call Waiter, Connect to WiFi, WhatsApp)",
+      "url": "https://food.grab.com or https://wa.me/639123456789 or #",
+      "icon": "shopping-bag",
+      "badge": "Order Now",
+      "isPrimary": true
+    }
+  ],
+  "suggestedButtons": [
+    {
+      "title": "Button Title (e.g. Order Delivery, Shopee Store, Instagram, Book Appointment)",
+      "url": "https://shopee.ph or https://instagram.com or #",
+      "platform": "shopee",
+      "category": "featured",
+      "badge": "Order Now",
+      "isHighlighted": true
+    }
+  ],`;
+    } else {
+      prompt += `
+  "suggestedButtons": [
+    {
+      "title": "Button Title (e.g. Order via GrabFood, Shopee Store, Follow on Instagram, Book Appointment, Call Us)",
+      "url": "https://shopee.ph/store or https://instagram.com/brand or #",
+      "platform": "instagram",
+      "category": "featured",
+      "badge": "Order Now",
+      "isHighlighted": true
+    }
+  ],
+  "suggestedActionButtons": [
+    {
+      "title": "Button Title (e.g. Reserve Table, Order Delivery, Connect to WiFi)",
+      "url": "https://food.grab.com or #",
+      "icon": "shopping-bag",
+      "badge": "Order Now",
+      "isPrimary": true
+    }
+  ],`;
+    }
+  }
+
+  prompt += `
   "themeMode": "dark",
   "primaryColor": "#f59e0b",
   "secondaryAccent": "#d97706",
@@ -43,7 +97,7 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
 }
 
 CUSTOM CSS DESIGN INSTRUCTIONS:
-Author 5 to 8 concise, high-impact CSS rules in "customCss".
+Author 4 to 6 concise, high-impact CSS rules in "customCss".
 Make sure every property has !important so it overrides framework defaults cleanly.
 Focus on these key target classes:
 - .tmaker-profile-root, .tmaker-menu-root : Page canvas (e.g. radial ambient spotlight at top)
@@ -65,46 +119,19 @@ CRITICAL CONTRAST & READABILITY RULES:
 8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
 9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
-function buildPrompt(
-  userPrompt?: string,
-  hasImage?: boolean,
-  mode: "theme_only" | "full" = "theme_only",
-  targetType: "profile" | "menu" = "profile"
-): string {
-  let prompt = AUTO_STYLE_BASE_PROMPT;
+  if (mode === "full") {
+    prompt += `\n\nAI BUTTON & COMPONENT BUILDER ACTIVATED:
+You MUST generate 2 to 4 actual clickable buttons in "suggestedButtons" AND "suggestedActionButtons" matching the user's explicit request or brand theme (e.g. Shopee, Grab, Instagram, Reserve Table, WiFi, Call).
+For "suggestedButtons": platform must be one of "instagram" | "facebook" | "shopee" | "lazada" | "tiktok" | "spotify" | "youtube" | "whatsapp" | "phone" | "email" | "website" | "custom", category one of "featured" | "social" | "contact" | "products" | "other".
+For "suggestedActionButtons": icon must be one of "calendar" | "phone" | "shopping-bag" | "instagram" | "facebook" | "globe" | "message-circle".`;
+  }
+
   if (hasImage && userPrompt) {
     prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above. Understand their aesthetic vision in any language.`;
   } else if (!hasImage && userPrompt) {
     prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nAuthor the entire theme, palette, typography, vibe, design concept, and bespoke custom CSS based strictly on this style direction. Understand their aesthetic vision in any language.`;
   } else {
     prompt += `\n\nExtract and author the entire bespoke theme, palette, and custom CSS based on the visual branding and atmosphere of the provided image.`;
-  }
-
-  if (mode === "full") {
-    if (targetType === "profile") {
-      prompt += `\n\nAI BUTTON & COMPONENT BUILDER ACTIVATED:
-In addition to the visual theme, you MUST ALSO GENERATE 2 to 5 actual clickable link buttons in "suggestedButtons" matching the user's prompt or brand identity.
-Each button in "suggestedButtons" must follow this exact shape:
-{
-  "title": "Button Title (e.g. Order via GrabFood, Shopee Store, Follow on Instagram, Book Appointment)",
-  "url": "https://shopee.ph/store or https://instagram.com/brand or #",
-  "platform": "instagram" | "facebook" | "shopee" | "lazada" | "tiktok" | "spotify" | "youtube" | "whatsapp" | "phone" | "email" | "website" | "custom",
-  "category": "featured" | "social" | "contact" | "products" | "other",
-  "badge": "Short badge (e.g. 'Order Now', 'Bestseller', 'New', '20% Off', 'Book') or null",
-  "isHighlighted": true or false
-}`;
-    } else {
-      prompt += `\n\nAI MENU ACTION BUTTON BUILDER ACTIVATED:
-In addition to the visual theme, you MUST ALSO GENERATE 2 to 4 quick action buttons in "suggestedActionButtons" matching the restaurant/cafe prompt (e.g. Reserve Table, Order on Grab, Call Waiter, Connect to WiFi, WhatsApp).
-Each button in "suggestedActionButtons" must follow this exact shape:
-{
-  "title": "Button Title (e.g. Reserve Table, Order Delivery, Connect to WiFi)",
-  "url": "https://wa.me/639123456789 or https://food.grab.com or #",
-  "icon": "calendar" | "phone" | "shopping-bag" | "instagram" | "facebook" | "globe" | "message-circle",
-  "badge": "e.g. 'Fast', 'Free WiFi', 'Promo' or null",
-  "isPrimary": true or false
-}`;
-    }
   }
 
   return prompt;
@@ -205,7 +232,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 850,
+      max_tokens: 950,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -226,7 +253,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 850,
+      max_tokens: 950,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -325,9 +352,17 @@ export async function POST(request: Request) {
     const requestedMode = (formData.get("mode") as string) === "full" ? "full" : "theme_only";
     const targetType = (formData.get("targetType") as string) === "menu" ? "menu" : "profile";
 
+    // Auto-detect if user prompt explicitly requests buttons, links, or ordering platforms in Tagalog or English
+    const asksForButtons =
+      /\b(button|buttons|pindutan|butones|link|links|shopee|grab|grabfood|foodpanda|lazada|instagram|ig|facebook|fb|whatsapp|tiktok|wifi|reserve|reservation|booking|call|contact|order|tawag)\b/i.test(
+        promptText
+      );
+
+    const wantsFullMode = requestedMode === "full" || asksForButtons;
+
     // Permission check: default to visual theme only unless Super Admin granted allowAiPageBuilder
     let effectiveMode: "theme_only" | "full" = "theme_only";
-    if (requestedMode === "full") {
+    if (wantsFullMode) {
       if (isAdmin) {
         effectiveMode = "full";
       } else {
@@ -391,6 +426,58 @@ export async function POST(request: Request) {
       if (!parsed.textSecondaryColor || isDarkHex(parsed.textSecondaryColor)) {
         parsed.textSecondaryColor = "#cbd5e1";
       }
+    }
+
+    // Cross-populate suggestedButtons and suggestedActionButtons so both editors always receive the buttons
+    const rawButtons = Array.isArray(parsed.suggestedButtons) ? (parsed.suggestedButtons as any[]) : [];
+    const rawActionButtons = Array.isArray(parsed.suggestedActionButtons)
+      ? (parsed.suggestedActionButtons as any[])
+      : [];
+
+    if (rawButtons.length > 0 && rawActionButtons.length === 0) {
+      parsed.suggestedActionButtons = rawButtons.map((b) => {
+        let icon = "globe";
+        const p = (b.platform || "").toLowerCase();
+        if (p.includes("shopee") || p.includes("grab") || p.includes("lazada") || p.includes("order")) {
+          icon = "shopping-bag";
+        } else if (p.includes("call") || p.includes("phone")) {
+          icon = "phone";
+        } else if (p.includes("insta")) {
+          icon = "instagram";
+        } else if (p.includes("face")) {
+          icon = "facebook";
+        } else if (p.includes("reserve") || p.includes("book")) {
+          icon = "calendar";
+        } else if (p.includes("chat") || p.includes("what")) {
+          icon = "message-circle";
+        }
+        return {
+          title: String(b.title || "Quick Action"),
+          url: String(b.url || "#"),
+          icon,
+          badge: b.badge ? String(b.badge) : null,
+          isPrimary: Boolean(b.isHighlighted),
+        };
+      });
+    } else if (rawActionButtons.length > 0 && rawButtons.length === 0) {
+      parsed.suggestedButtons = rawActionButtons.map((b) => {
+        let platform = "website";
+        const ic = (b.icon || "").toLowerCase();
+        if (ic.includes("instagram")) platform = "instagram";
+        else if (ic.includes("facebook")) platform = "facebook";
+        else if (ic.includes("phone")) platform = "phone";
+        else if (ic.includes("shopping")) platform = "shopee";
+        else if (ic.includes("message")) platform = "whatsapp";
+
+        return {
+          title: String(b.title || "Quick Link"),
+          url: String(b.url || "#"),
+          platform,
+          category: "featured",
+          badge: b.badge ? String(b.badge) : null,
+          isHighlighted: Boolean(b.isPrimary),
+        };
+      });
     }
 
     // Attach user prompt and effective builder mode to result

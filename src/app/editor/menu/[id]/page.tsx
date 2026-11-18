@@ -84,12 +84,30 @@ export default function MenuEditorPage() {
   const handleApplyMenuAiStyle = (result: AutoStyleResult) => {
     if (!menu) return;
 
-    const newButtons = (result.suggestedActionButtons || []).map((btn, idx) => ({
+    const sourceButtons =
+      result.suggestedActionButtons && result.suggestedActionButtons.length > 0
+        ? result.suggestedActionButtons
+        : (result.suggestedButtons || []).map((b) => ({
+            title: b.title,
+            url: b.url || "#",
+            icon:
+              b.platform === "instagram"
+                ? "instagram"
+                : b.platform === "facebook"
+                ? "facebook"
+                : b.platform === "phone"
+                ? "phone"
+                : "globe",
+            badge: b.badge,
+            isPrimary: Boolean(b.isHighlighted),
+          }));
+
+    const newButtons = sourceButtons.map((btn, idx) => ({
       id: `btn-${Date.now()}-${idx}`,
       title: btn.title,
       url: btn.url || "#",
       icon: btn.icon || "globe",
-      badge: btn.badge,
+      badge: btn.badge || undefined,
       isPrimary: Boolean(btn.isPrimary),
     }));
 
@@ -1825,6 +1843,85 @@ export default function MenuEditorPage() {
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Quick Action Buttons (Shopee, Grab, WiFi, etc.) */}
+              <div className="sm:col-span-2 pt-2 border-t border-slate-800 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <ExternalLink className="w-4 h-4 text-emerald-400" />
+                      <span>Quick Action Buttons &amp; Store Links</span>
+                      {menu.actionButtons && menu.actionButtons.length > 0 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                          {menu.actionButtons.length} active
+                        </span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Clickable buttons displayed under your menu header (e.g. Order Delivery, Reserve Table, WiFi, Instagram).
+                    </p>
+                  </div>
+                  {menu.actionButtons && menu.actionButtons.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setMenu({ ...menu, actionButtons: [] })}
+                      className="text-[11px] text-red-400 hover:text-red-300 underline"
+                    >
+                      Clear All Buttons
+                    </button>
+                  )}
+                </div>
+
+                {menu.actionButtons && menu.actionButtons.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {menu.actionButtons.map((btn, idx) => (
+                      <div
+                        key={btn.id || idx}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{
+                              backgroundColor: btn.isPrimary
+                                ? menu.themeSettings?.accentColor || "#10b981"
+                                : "#64748b",
+                            }}
+                          />
+                          <div className="truncate">
+                            <span className="font-semibold text-white truncate block">
+                              {btn.title}
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate block">
+                              {btn.url || "#"}
+                            </span>
+                          </div>
+                          {btn.badge && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 flex-shrink-0">
+                              {btn.badge}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (menu.actionButtons || []).filter((_, i) => i !== idx);
+                            setMenu({ ...menu, actionButtons: updated });
+                          }}
+                          className="p-1 text-slate-500 hover:text-red-400 transition-colors ml-2 flex-shrink-0"
+                          title="Remove button"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/60 text-slate-400 text-xs flex items-center justify-between">
+                    <span>No action buttons yet. Prompt AI or switch to Full Builder mode to generate buttons!</span>
+                  </div>
+                )}
               </div>
 
               {/* AI Bespoke Visual Design & Custom CSS */}
