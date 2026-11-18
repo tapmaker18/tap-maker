@@ -21,30 +21,29 @@ function buildPrompt(
   mode: "theme_only" | "full" = "theme_only",
   targetType: "profile" | "menu" = "profile"
 ): string {
-  let prompt = `You are a world-class award-winning creative art director, brand stylist, and master CSS visual architect.
-DO NOT JUST PICK FLAT COLORS. You must LITERALLY CREATE A UNIQUE, BESPOKE VISUAL DESIGN and author a custom CSS stylesheet that transforms this digital profile card or menu into a genuine work of art tailored to this exact business.
-
+  let prompt = `You are a world-class creative brand stylist and UI architect.
+Author a tailored visual design and CSS stylesheet for this digital card or menu.
 Output strictly valid JSON with no markdown wrapping or fences, matching this exact shape:
 {
-  "designConcept": "A distinct creative design title (e.g. 'Artisan Roast & Velvet Wood', 'Tokyo Cyberpunk Hologram', 'Minimalist Scandinavian Bistro', 'Luxe Gold Leaf Executive', 'Sun-Drenched Coastal Bistro', 'Neo-Brutalist Bold Streetwear')",
-  "vibe": "Short 2-4 word aesthetic description",
-  "vibeExplanation": "1-2 sentences explaining why this visual design, lighting, and mood embody this brand",
-  "tagline": "A punchy, attractive tagline or brand slogan",`;
+  "designConcept": "Creative design title (e.g. 'Artisan Velvet & Oak')",
+  "vibe": "Short 2-4 word aesthetic vibe",
+  "vibeExplanation": "1 sentence on why this fits the brand",
+  "tagline": "Punchy brand slogan",`;
 
   if (mode === "full") {
     if (targetType === "menu") {
       prompt += `
-  "badgeText": "Floating Promo / Announcement Ribbon (e.g. 'Flash Sale: 20% Off', 'Buy 1 Take 1', 'Open Daily') or null",
+  "badgeText": "Floating Promo / Announcement Ribbon (e.g. 'Flash Sale: 20% Off', 'Buy 1 Take 1') or null",
   "contactInfo": {
     "phone": "Phone hotline or null",
-    "address": "Store physical location / address or null",
+    "address": "Store physical location or null",
     "openingHours": "Operating hours (e.g. 'Mon-Sun: 8:00 AM - 10:00 PM') or null",
     "website": "https://... or null"
   },
   "suggestedActionButtons": [
     {
-      "title": "Button Title (e.g. Reserve Table, Order on GrabFood, Connect to WiFi, WhatsApp, Call Waiter, Waze Directions)",
-      "url": "https://food.grab.com or https://wa.me/639123456789 or #",
+      "title": "Button Title (e.g. Reserve Table, GrabFood, Connect WiFi, WhatsApp)",
+      "url": "https://... or #",
       "icon": "shopping-bag",
       "badge": "Order Now",
       "isPrimary": true
@@ -52,9 +51,9 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   ],
   "suggestedButtons": [
     {
-      "title": "Button Title (e.g. Order Delivery, Shopee Store, Instagram, Book Appointment)",
-      "url": "https://shopee.ph or https://instagram.com or #",
-      "platform": "shopee",
+      "title": "Button Title (e.g. Shopee Store, Instagram)",
+      "url": "https://... or #",
+      "platform": "instagram",
       "category": "featured",
       "badge": "Order Now",
       "isHighlighted": true
@@ -62,11 +61,11 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   ],
   "suggestedCategories": [
     {
-      "name": "Category Name (e.g. Signature Coolers, Mains, Specialty Coffee, Pastries)",
+      "name": "Category Name (e.g. Signature Coolers, Mains)",
       "items": [
         {
-          "name": "Item Name (e.g. Mango Graham Shake)",
-          "description": "Appetizing 1-sentence description",
+          "name": "Item Name",
+          "description": "Short appetizing description",
           "price": 140,
           "tags": ["bestseller"],
           "isFeatured": true
@@ -78,7 +77,7 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
       prompt += `
   "subtitle": "Professional Title, Role, or Brand Tagline",
   "bio": "Compelling 1-2 sentence bio or brand story",
-  "badgeText": "Floating Status / Announcement Ribbon (e.g. 'Open for Collabs', 'Available for Hire', 'Founder') or null",
+  "badgeText": "Floating Status / Announcement Ribbon (e.g. 'Open for Collabs') or null",
   "contactInfo": {
     "email": "contact@email.com or null",
     "phone": "+639123456789 or null",
@@ -88,20 +87,20 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   },
   "suggestedButtons": [
     {
-      "title": "Button Title (e.g. Order via GrabFood, Shopee Store, Follow on Instagram, Book Appointment, Call Us)",
-      "url": "https://shopee.ph/store or https://instagram.com/brand or #",
+      "title": "Button Title (e.g. Follow on Instagram, Shopee Store, Book Appointment)",
+      "url": "https://... or #",
       "platform": "instagram",
       "category": "featured",
-      "badge": "Order Now",
+      "badge": "Connect",
       "isHighlighted": true
     }
   ],
   "suggestedActionButtons": [
     {
-      "title": "Button Title (e.g. Reserve Table, Order Delivery, Connect to WiFi)",
-      "url": "https://food.grab.com or #",
-      "icon": "shopping-bag",
-      "badge": "Order Now",
+      "title": "Button Title (e.g. WhatsApp, Call Us)",
+      "url": "https://... or #",
+      "icon": "phone",
+      "badge": "Chat",
       "isPrimary": true
     }
   ],`;
@@ -124,49 +123,36 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   "suggestedMenuCardStyle": "glass",
   "imageFilter": "vibrant",
   "bgPattern": "mesh",
-  "customCss": "/* Scoped custom CSS designed specifically for this brand */"
+  "customCss": "/* Scoped custom CSS */"
 }
 
-CUSTOM CSS DESIGN INSTRUCTIONS:
-Author 4 to 6 concise, high-impact CSS rules in "customCss".
-Make sure every property has !important so it overrides framework defaults cleanly.
-Focus on these key target classes:
-- .tmaker-profile-root, .tmaker-menu-root : Page canvas (e.g. radial ambient spotlight at top)
-- .tmaker-card, .tmaker-menu-item-card : Main card containers (backdrop-blur, borders, shadows)
-- .tmaker-avatar-wrap, .tmaker-menu-logo : Avatar/logo frame (accent border, glow)
-- .tmaker-name, .tmaker-menu-title : Brand/person title (color, letter-spacing)
-- .tmaker-subtitle, .tmaker-menu-tagline : Subtitle/tagline
-- .tmaker-link-item, .tmaker-action-btn : Link/action buttons (colors, hover glow)
-Keep "customCss" compact and concise so the JSON response completes without truncation.
-
-CRITICAL CONTRAST & READABILITY RULES:
-1. textColor MUST ALWAYS be #ffffff or #f8fafc on dark themeMode. NEVER generate dark brown, dark gray, or low-contrast text.
-2. textSecondaryColor MUST ALWAYS be light and easily readable (#cbd5e1 or #e2e8f0). NEVER generate dark gray or dark brown on dark backgrounds.
-3. In "customCss", write ONLY pure CSS rules. NEVER include <style> tags or HTML.
-4. "fontFamily" must be one of: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", "Playfair Display".
-5. "suggestedTemplate" must be one of: "executive-card", "cyber-glow", "modern-bio".
-6. "suggestedMenuCardStyle" must be one of: "clean", "glass", "bordered".
-7. "buttonRadius" must be one of: "sharp", "rounded", "pill".
-8. "imageFilter" must be one of: "none", "vibrant", "warm", "noir", "cyber", "vintage", "cool".
-9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
+CUSTOM CSS & DESIGN RULES:
+1. Author 3 to 4 concise CSS rules in "customCss" targeting .tmaker-profile-root / .tmaker-menu-root, .tmaker-card, .tmaker-link-item / .tmaker-action-btn with !important.
+2. textColor MUST be #ffffff or #f8fafc on dark themeMode.
+3. textSecondaryColor MUST be readable (#cbd5e1 or #e2e8f0).
+4. fontFamily: "Plus Jakarta Sans", "Space Grotesk", "Inter", "Outfit", or "Playfair Display".
+5. suggestedTemplate: "executive-card", "cyber-glow", or "modern-bio".
+6. suggestedMenuCardStyle: "clean", "glass", or "bordered".
+7. buttonRadius: "sharp", "rounded", or "pill".
+8. imageFilter: "none", "vibrant", "warm", "noir", "cyber", "vintage", or "cool".
+9. bgPattern: "none", "grain", "dots", "grid", or "mesh".
+10. KEEP OUTPUT COMPACT: Return concise JSON under 650 tokens total. Keep item lists and descriptions short.`;
 
   if (mode === "full") {
-    prompt += `\n\nAUTONOMOUS AI PAGE, CONTENT & FUNCTION BUILDER ACTIVATED:
-You are not just a color picker. You are a complete autonomous AI Page and Business Builder that literally implements any feature, function, section, or content the user requests:
-1. FUNCTION & ACTION BUTTONS: If the user asks for buttons, links, or functional features (WiFi, Table Reservation, GrabFood, Shopee, Call, WhatsApp, Location/Maps, Socials), generate them in "suggestedActionButtons" and "suggestedButtons".
-2. MENU CATEGORIES & ITEMS: If the user asks to add or generate menu categories, food, drinks, or dishes (e.g. "maglagay ka ng Drinks category", "add desserts with prices"), generate them with appetizing names, descriptions, realistic prices (PHP), and tags in "suggestedCategories". If they did not ask for menu items, you may omit "suggestedCategories" or keep it empty.
-3. BUSINESS INFO & STORE HOURS: If the user provides or asks for store hours, address, phone number, email, or location, populate them in "contactInfo".
-4. ANNOUNCEMENT & PROMO RIBBON: If the user asks for a promo, announcement, or banner (e.g. "Buy 1 Take 1", "Open Daily", "20% Off"), set it in "badgeText".
-5. BIO & STORY: If the user asks for bio or role, craft a captivating bio in "bio" and role in "subtitle".
-6. VISUAL BRAND IDENTITY: Author the matching bespoke theme palette and custom CSS for this brand concept.`;
+    prompt += `\n\nAUTONOMOUS BUILDER:
+- If user requests buttons/links/socials, populate suggestedButtons & suggestedActionButtons.
+- If user requests food/drinks/menu items, populate suggestedCategories (max 2-3 items per category).
+- If user provides hours/address/contact, populate contactInfo.
+- If user requests a promo banner, set badgeText.
+- If user asks for bio/story, set bio & subtitle.`;
   }
 
   if (hasImage && userPrompt) {
-    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nSynthesize the visual branding from the image while STRICTLY FOLLOWING and prioritizing the user's specific creative direction and style vibe above. Understand their aesthetic vision in any language.`;
+    prompt += `\n\nUSER'S DIRECTION (Tagalog / Filipino / English):\n"${userPrompt}"\nSynthesize branding from image and prioritize user's direction above.`;
   } else if (!hasImage && userPrompt) {
-    prompt += `\n\nUSER'S EXPLICIT CREATIVE & STYLE DIRECTION (may be in Tagalog, Filipino, Taglish, or English):\n"${userPrompt}"\nAuthor the entire theme, palette, typography, vibe, design concept, and bespoke custom CSS based strictly on this style direction. Understand their aesthetic vision in any language.`;
+    prompt += `\n\nUSER'S DIRECTION (Tagalog / Filipino / English):\n"${userPrompt}"\nBuild theme, content, and CSS strictly matching this direction.`;
   } else {
-    prompt += `\n\nExtract and author the entire bespoke theme, palette, and custom CSS based on the visual branding and atmosphere of the provided image.`;
+    prompt += `\n\nExtract and author bespoke theme, palette, and custom CSS based on image.`;
   }
 
   return prompt;
@@ -207,38 +193,48 @@ async function scanWithGemini(
   buffer?: Buffer | null,
   mimeType?: string
 ): Promise<string> {
-  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-    model: "gemini-flash-latest",
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.25,
-    },
-  });
+  const models = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-flash-latest"];
+  let lastErr: unknown = null;
 
-  // Fast 3.5s timeout: if Google free tier is hanging or 503-ing, abort fast and hand over to Groq
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-  try {
-    const contents: any[] = [prompt];
-    if (buffer) {
-      contents.push({
-        inlineData: {
-          data: buffer.toString("base64"),
-          mimeType: mimeType || "image/jpeg",
+  for (const modelName of models) {
+    try {
+      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.25,
         },
       });
-    }
 
-    const result = await model.generateContent(contents, {
-      signal: controller.signal,
-    });
-    const text = result.response.text().trim();
-    if (text) return text;
-    throw new Error("Empty response from Gemini.");
-  } finally {
-    clearTimeout(timeoutId);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      try {
+        const contents: any[] = [prompt];
+        if (buffer) {
+          contents.push({
+            inlineData: {
+              data: buffer.toString("base64"),
+              mimeType: mimeType || "image/jpeg",
+            },
+          });
+        }
+
+        const result = await model.generateContent(contents, {
+          signal: controller.signal,
+        });
+        const text = result.response.text().trim();
+        if (text) return text;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (err) {
+      lastErr = err;
+      console.warn(`Gemini auto-style model ${modelName} failed or timed out:`, err);
+    }
   }
+
+  throw lastErr || new Error("Gemini auto-style failed.");
 }
 
 // ── Groq / Vision or Text fallback ───────────────────────────────
@@ -267,7 +263,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 1500,
+      max_tokens: 750,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -280,7 +276,7 @@ async function scanWithGroq(
       messages: [
         {
           role: "system",
-          content: "You are a JSON-only API. Output ONLY raw valid JSON with no markdown fences, no explanation, no thinking tags. Do not use <think> tags.",
+          content: "You are a JSON-only API. Output ONLY raw valid JSON with no markdown fences, no explanation, no thinking tags. Do not use <think> tags. Keep output under 650 tokens.",
         },
         {
           role: "user",
@@ -288,7 +284,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 1500,
+      max_tokens: 750,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -298,48 +294,64 @@ async function scanWithGroq(
 }
 
 function extractAndParseJson(rawOutput: string): Record<string, unknown> {
-  // Strip qwen thinking tags: <think>...</think>
+  // Strip qwen thinking tags: <think>...</think> and code fences
   let cleaned = rawOutput
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
     .trim();
 
-  // Try direct parse first
+  // 1. Try direct parse first
   try {
     return JSON.parse(cleaned);
   } catch {}
 
   const firstBrace = cleaned.indexOf("{");
-  if (firstBrace !== -1) {
-    const candidate = cleaned.substring(firstBrace);
+  if (firstBrace === -1) {
+    throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
+  }
 
-    // Try parsing candidate directly or up to last brace
-    const lastBrace = candidate.lastIndexOf("}");
-    if (lastBrace > 0) {
+  const s = cleaned.substring(firstBrace);
+
+  // 2. Progressive salvage: recover truncated JSON by closing arrays, strings, and objects
+  for (let i = s.length; i > 0; i--) {
+    const ch = s[i - 1];
+    if (ch === "}" || ch === '"' || ch === "]" || ch === ";") {
+      let sub = s.substring(0, i);
+      if (ch === ";") sub += '"';
+
+      // Balance unescaped quotes
+      const quotes = (sub.match(/(?<!\\)"/g) || []).length;
+      if (quotes % 2 !== 0) sub += '"';
+
+      // Remove any trailing comma before closing brackets
+      sub = sub.replace(/,\s*$/, "");
+
+      // Track unclosed brackets and braces
+      const opens: string[] = [];
+      let inString = false;
+      for (let j = 0; j < sub.length; j++) {
+        const c = sub[j];
+        if (c === '"' && (j === 0 || sub[j - 1] !== "\\")) inString = !inString;
+        if (!inString) {
+          if (c === "{" || c === "[") opens.push(c);
+          else if (c === "}" && opens[opens.length - 1] === "{") opens.pop();
+          else if (c === "]" && opens[opens.length - 1] === "[") opens.pop();
+        }
+      }
+
+      // Close all unclosed opens in reverse order
+      while (opens.length > 0) {
+        const op = opens.pop();
+        if (op === "{") sub += "}";
+        else if (op === "[") sub += "]";
+      }
+
       try {
-        return JSON.parse(candidate.substring(0, lastBrace + 1));
+        const res = JSON.parse(sub);
+        if (res && typeof res === "object") return res as Record<string, unknown>;
       } catch {}
     }
-
-    // If truncated inside customCss string, trim back to the last complete CSS rule ending with semicolon
-    const lastSemi = candidate.lastIndexOf(";");
-    if (lastSemi > 0) {
-      try {
-        const rescued = candidate.substring(0, lastSemi + 1) + '" }';
-        return JSON.parse(rescued);
-      } catch {}
-    }
-
-    // Try counting unescaped quotes and closing braces
-    let testStr = (lastBrace > 0 ? candidate.substring(0, lastBrace + 1) : candidate).trim();
-    testStr = testStr.replace(/,\s*$/, "");
-    const quoteCount = (testStr.match(/(?<!\\)"/g) || []).length;
-    if (quoteCount % 2 !== 0) testStr += '"';
-    if (!testStr.endsWith("}")) testStr += "}";
-    try {
-      return JSON.parse(testStr);
-    } catch {}
   }
 
   throw new ApiError("The AI generated a response that could not be parsed as valid JSON.", 502);
