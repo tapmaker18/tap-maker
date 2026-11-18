@@ -20,6 +20,10 @@ import {
   Sparkles,
   Share2,
   CheckCircle2,
+  Wifi,
+  Calendar,
+  ShoppingBag,
+  MessageCircle,
 } from "lucide-react";
 
 interface MenuRendererProps {
@@ -237,7 +241,23 @@ export const MenuRenderer: React.FC<MenuRendererProps> = ({ menu, isPreview = fa
                   }`}
                   style={btn.isPrimary ? { backgroundColor: accentColor } : undefined}
                 >
-                  <Sparkles className="w-3 h-3 text-amber-300 flex-shrink-0" />
+                  {btn.icon === "wifi" ? (
+                    <Wifi className="w-3 h-3 text-cyan-300 flex-shrink-0" />
+                  ) : btn.icon === "calendar" ? (
+                    <Calendar className="w-3 h-3 text-amber-300 flex-shrink-0" />
+                  ) : btn.icon === "phone" ? (
+                    <Phone className="w-3 h-3 text-emerald-300 flex-shrink-0" />
+                  ) : btn.icon === "shopping-bag" ? (
+                    <ShoppingBag className="w-3 h-3 text-pink-300 flex-shrink-0" />
+                  ) : btn.icon === "instagram" ? (
+                    <Instagram className="w-3 h-3 text-rose-300 flex-shrink-0" />
+                  ) : btn.icon === "facebook" ? (
+                    <Facebook className="w-3 h-3 text-blue-300 flex-shrink-0" />
+                  ) : btn.icon === "message-circle" ? (
+                    <MessageCircle className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <Sparkles className="w-3 h-3 text-amber-300 flex-shrink-0" />
+                  )}
                   <span>{btn.title}</span>
                   {btn.badge && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/20 text-white font-mono">

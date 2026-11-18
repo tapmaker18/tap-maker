@@ -80,10 +80,28 @@ export default function EditorPage() {
       sortOrder: (profile.links?.length || 0) + idx,
     }));
 
+    // 2. Process Contact Info updates (email, phone, location, etc.)
+    const updatedContactInfo = result.contactInfo
+      ? {
+          ...profile.contactInfo,
+          email: result.contactInfo.email || profile.contactInfo?.email || "",
+          phone: result.contactInfo.phone || profile.contactInfo?.phone || "",
+          location:
+            result.contactInfo.location ||
+            result.contactInfo.address ||
+            profile.contactInfo?.location ||
+            "",
+          company: result.contactInfo.company || profile.contactInfo?.company || "",
+          website: result.contactInfo.website || profile.contactInfo?.website || "",
+        }
+      : profile.contactInfo;
+
     setProfile({
       ...profile,
       templateId: result.suggestedTemplate || profile.templateId,
-      subtitle: profile.subtitle || result.tagline || "",
+      subtitle: result.subtitle || result.tagline || profile.subtitle || "",
+      bio: result.bio || profile.bio || "",
+      contactInfo: updatedContactInfo,
       links: newLinks.length > 0 ? [...profile.links, ...newLinks] : profile.links,
       themeSettings: {
         ...profile.themeSettings,
@@ -105,6 +123,7 @@ export default function EditorPage() {
         bgPattern: result.bgPattern || "none",
         designConcept: result.designConcept || result.vibe,
         customCss: result.customCss || profile.themeSettings.customCss || "",
+        badgeText: result.badgeText || profile.themeSettings.badgeText,
       },
     });
     confetti({

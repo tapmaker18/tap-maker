@@ -16,6 +16,9 @@ export interface AutoStyleResult {
   builderMode?: "theme_only" | "full";
   vibeExplanation?: string;
   tagline?: string;
+  subtitle?: string;
+  bio?: string;
+  badgeText?: string;
   themeMode: "dark" | "light";
   primaryColor: string;
   secondaryAccent: string;
@@ -32,7 +35,19 @@ export interface AutoStyleResult {
   imageFilter?: ImageFilterPreset;
   bgPattern?: BgPatternType;
   customCss?: string;
-  // AI Page Builder additions:
+  // Store, Business & Contact Information Functions
+  contactInfo?: {
+    phone?: string;
+    address?: string;
+    openingHours?: string;
+    email?: string;
+    location?: string;
+    company?: string;
+    website?: string;
+    instagram?: string;
+    facebook?: string;
+  };
+  // AI Page Builder & Action Buttons
   suggestedButtons?: {
     title: string;
     url?: string;
@@ -47,6 +62,18 @@ export interface AutoStyleResult {
     icon?: string;
     badge?: string;
     isPrimary?: boolean;
+  }[];
+  // AI Menu Categories & Food/Drink Items Builder
+  suggestedCategories?: {
+    name: string;
+    icon?: string;
+    items: {
+      name: string;
+      description?: string;
+      price: number;
+      tags?: string[];
+      isFeatured?: boolean;
+    }[];
   }[];
 }
 

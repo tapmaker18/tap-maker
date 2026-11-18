@@ -230,12 +230,12 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                     }`}
                     title={
                       canUseAiPageBuilder
-                        ? "AI generates visual theme + clickable buttons & links"
+                        ? "AI generates visual theme + functions, menu items, sections, buttons & store info"
                         : "Requires Super Admin Permission"
                     }
                   >
                     <Sparkles className="w-3 h-3 text-emerald-400" />
-                    <span>⚡ Full Builder (Theme + Buttons)</span>
+                    <span>⚡ Full AI Builder (Design, Content, Functions & Items)</span>
                     {!canUseAiPageBuilder && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
                         Admin Lock
@@ -250,7 +250,9 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   rows={2}
                   placeholder={
                     builderMode === "full"
-                      ? "e.g. Gawan mo ko ng profile na may buttons para sa Shopee, Instagram, GrabFood, at Call Us..."
+                      ? targetType === "menu"
+                        ? "e.g. Dagdag ka ng Summer Coolers category na may 3 drinks at presyo, Table Reservation button, Store Hours 9am-10pm, at warm aesthetic cafe theme..."
+                        : "e.g. Gawan mo ko ng profile na may bio bilang Tech CEO sa BGC, Calendly booking, LinkedIn, WiFi details, at futuristic dark neon theme..."
                       : "e.g. Mamahaling lounge na may ginto at itim, Maaliwalas na aesthetic cafe, o Cyberpunk neon..."
                   }
                   className="w-full text-xs bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all resize-none leading-relaxed"
@@ -260,12 +262,19 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
                   {(builderMode === "full"
-                    ? [
-                        "🛍️ Add Shopee Store & GrabFood buttons with highlight",
-                        "📸 Add Instagram, TikTok, & YouTube links",
-                        "📞 Add Call Us, WhatsApp, & Email buttons",
-                        "✨ Luxury Gold Executive + All Social Buttons",
-                      ]
+                    ? targetType === "menu"
+                      ? [
+                          "🍜 Add Ramen & Gyoza category with prices + Table Reservation button",
+                          "☕ Add Specialty Coffee category + GrabFood button + Store Hours 8am-9pm",
+                          "⚡ Add Promo Banner 'Buy 1 Take 1' + Shopee Store & WiFi button",
+                          "🍸 Luxury Cocktail Lounge + WhatsApp booking + moody dark theme",
+                        ]
+                      : [
+                          "💼 Tech CEO Bio + Calendly booking + LinkedIn & Portfolio buttons",
+                          "🛍️ Add Shopee Store & GrabFood buttons with highlight + Contact info",
+                          "📸 Influencer Bio + Instagram, TikTok, & YouTube links + Collabs badge",
+                          "✨ Luxury Gold Executive + All Social Buttons & Location",
+                        ]
                     : PROMPT_PRESETS
                   ).map((preset) => (
                     <button

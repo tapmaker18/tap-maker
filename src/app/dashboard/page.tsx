@@ -1914,10 +1914,10 @@ export default function DashboardPage() {
                 <div>
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Full AI Page &amp; Button Builder</span>
+                    <span>Full AI Page, Content &amp; Function Builder</span>
                   </span>
                   <p className="text-[10px] text-slate-400 mt-0.5">
-                    Allow client to generate actual buttons &amp; layout via AI prompt (Default: unchecked / theme only)
+                    Allow client to generate literal functions, menu items, sections, buttons &amp; layout via AI prompt (Default: unchecked / theme only)
                   </p>
                 </div>
                 <input

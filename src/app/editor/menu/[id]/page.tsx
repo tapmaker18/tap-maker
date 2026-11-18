@@ -84,6 +84,7 @@ export default function MenuEditorPage() {
   const handleApplyMenuAiStyle = (result: AutoStyleResult) => {
     if (!menu) return;
 
+    // 1. Process Action Buttons (WiFi, Reservation, Grab, Shopee, Call, etc.)
     const sourceButtons =
       result.suggestedActionButtons && result.suggestedActionButtons.length > 0
         ? result.suggestedActionButtons
@@ -111,9 +112,48 @@ export default function MenuEditorPage() {
       isPrimary: Boolean(btn.isPrimary),
     }));
 
+    // 2. Process AI Generated Menu Categories & Items (if user requested them)
+    const now = Date.now();
+    const newCategories: MenuCategory[] = (result.suggestedCategories || []).map((cat, catIdx) => ({
+      id: `cat_${now}_${catIdx}_${Math.random().toString(36).slice(2, 6)}`,
+      name: cat.name || `Category ${menu.categories.length + catIdx + 1}`,
+      icon: cat.icon || "utensils",
+      isVisible: true,
+      sortOrder: menu.categories.length + catIdx,
+      items: (cat.items || []).map((it, itIdx) => ({
+        id: `item_${now}_${catIdx}_${itIdx}_${Math.random().toString(36).slice(2, 6)}`,
+        name: it.name || `Item ${itIdx + 1}`,
+        description: it.description || "",
+        price: typeof it.price === "number" ? it.price : 0,
+        currency: menu.categories[0]?.items[0]?.currency || "PHP",
+        isAvailable: true,
+        isFeatured: Boolean(it.isFeatured),
+        tags: it.tags || [],
+        sortOrder: itIdx,
+      })),
+    }));
+
+    // 3. Process Contact & Store Info updates (hours, phone, address, etc.)
+    const updatedContactInfo = result.contactInfo
+      ? {
+          ...menu.contactInfo,
+          phone: result.contactInfo.phone || menu.contactInfo?.phone || "",
+          address: result.contactInfo.address || menu.contactInfo?.address || "",
+          openingHours: result.contactInfo.openingHours || menu.contactInfo?.openingHours || "",
+          instagram: result.contactInfo.instagram || menu.contactInfo?.instagram || "",
+          facebook: result.contactInfo.facebook || menu.contactInfo?.facebook || "",
+          website: result.contactInfo.website || menu.contactInfo?.website || "",
+        }
+      : menu.contactInfo;
+
     setMenu({
       ...menu,
       tagline: menu.tagline || result.tagline || "",
+      categories:
+        newCategories.length > 0
+          ? [...menu.categories, ...newCategories]
+          : menu.categories,
+      contactInfo: updatedContactInfo,
       actionButtons:
         newButtons.length > 0
           ? [...(menu.actionButtons || []), ...newButtons]
@@ -129,6 +169,7 @@ export default function MenuEditorPage() {
         bgPattern: result.bgPattern || "none",
         designConcept: result.designConcept || result.vibe,
         customCss: result.customCss || menu.themeSettings?.customCss || "",
+        badgeText: result.badgeText || menu.themeSettings?.badgeText,
       },
     });
     try {
@@ -2009,12 +2050,12 @@ export default function MenuEditorPage() {
                       }`}
                       title={
                         canUseAiPageBuilder
-                          ? "AI generates visual theme + clickable action buttons"
+                          ? "AI generates visual theme + functions, menu items, sections, buttons & store info"
                           : "Requires Super Admin Permission"
                       }
                     >
                       <Sparkles className="w-3 h-3 text-emerald-400" />
-                      <span>⚡ Full Builder (Theme + Buttons)</span>
+                      <span>⚡ Full AI Builder (Design, Content, Functions & Items)</span>
                       {!canUseAiPageBuilder && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
                           Admin Lock
@@ -2042,7 +2083,7 @@ export default function MenuEditorPage() {
                       }}
                       placeholder={
                         menuBuilderMode === "full"
-                          ? "e.g. Lagyan mo ng buttons para sa Order on GrabFood, Reserve Table, at WiFi..."
+                          ? "e.g. Dagdag ka ng Summer Coolers category na may 3 drinks at presyo, Table Reservation button, Store Hours 9am-10pm, at warm aesthetic cafe theme..."
                           : "e.g. Mamahaling BGC cafe na may kahoy at ginto, Cyberpunk neon, o Rustic Italian..."
                       }
                       className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
@@ -2072,10 +2113,10 @@ export default function MenuEditorPage() {
                     <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
                     {(menuBuilderMode === "full"
                       ? [
-                          "🛍️ Add 'Order on GrabFood' button with Promo badge",
-                          "📅 Add 'Reserve Table' & WhatsApp buttons",
-                          "🛎️ Add 'Call Waiter' & 'Free WiFi' buttons",
-                          "✨ Luxury Gold & Dark + Action Buttons",
+                          "🍜 Add Ramen & Gyoza category with prices + Table Reservation button",
+                          "☕ Add Specialty Coffee category + GrabFood button + Store Hours 8am-9pm",
+                          "⚡ Add Promo Banner 'Buy 1 Take 1' + Shopee Store & WiFi button",
+                          "🍸 Luxury Cocktail Lounge + WhatsApp booking + moody dark theme",
                         ]
                       : [
                           "✨ Luxury Gold & Dark",

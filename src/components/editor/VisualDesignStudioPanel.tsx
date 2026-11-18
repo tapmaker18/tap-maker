@@ -628,12 +628,12 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
                 }`}
                 title={
                   canUseAiPageBuilder
-                    ? "AI generates visual theme + clickable profile link buttons"
+                    ? "AI generates visual theme + functions, bio, links, buttons & store info"
                     : "Requires Super Admin Permission"
                 }
               >
                 <Sparkles className="w-3 h-3 text-emerald-400" />
-                <span>⚡ Full Builder (Theme + Buttons)</span>
+                <span>⚡ Full AI Builder (Design, Content, Functions & Links)</span>
                 {!canUseAiPageBuilder && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
                     Admin Lock
@@ -661,7 +661,7 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
                 }}
                 placeholder={
                   studioBuilderMode === "full"
-                    ? "e.g. Gawan mo ko ng buttons para sa Shopee, Instagram, GrabFood, at Call Us..."
+                    ? "e.g. Bio bilang Tech Founder sa BGC, Calendly booking, LinkedIn, WiFi details, at futuristic dark neon theme..."
                     : "e.g. Modern executive glassmorphism, o aesthetic na cafe na may kahoy at ginto..."
                 }
                 className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
@@ -691,10 +691,10 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
               <span className="text-[10px] text-slate-500 font-mono">QUICK:</span>
               {(studioBuilderMode === "full"
                 ? [
-                    "🛍️ Add Shopee Store & GrabFood buttons with highlight",
-                    "📸 Add Instagram, TikTok, & YouTube links",
-                    "📞 Add Call Us, WhatsApp, & Email buttons",
-                    "✨ Luxury Gold Executive + All Social Buttons",
+                    "💼 Tech CEO Bio + Calendly booking + LinkedIn & Portfolio buttons",
+                    "🛍️ Add Shopee Store & GrabFood buttons with highlight + Contact info",
+                    "📸 Influencer Bio + Instagram, TikTok, & YouTube links + Collabs badge",
+                    "✨ Luxury Gold Executive + All Social Buttons & Location",
                   ]
                 : [
                     "✨ Executive Luxury & Gold",

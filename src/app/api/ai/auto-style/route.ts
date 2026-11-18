@@ -34,9 +34,16 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
   if (mode === "full") {
     if (targetType === "menu") {
       prompt += `
+  "badgeText": "Floating Promo / Announcement Ribbon (e.g. 'Flash Sale: 20% Off', 'Buy 1 Take 1', 'Open Daily') or null",
+  "contactInfo": {
+    "phone": "Phone hotline or null",
+    "address": "Store physical location / address or null",
+    "openingHours": "Operating hours (e.g. 'Mon-Sun: 8:00 AM - 10:00 PM') or null",
+    "website": "https://... or null"
+  },
   "suggestedActionButtons": [
     {
-      "title": "Button Title (e.g. Reserve Table, Order on Grab, Call Waiter, Connect to WiFi, WhatsApp)",
+      "title": "Button Title (e.g. Reserve Table, Order on GrabFood, Connect to WiFi, WhatsApp, Call Waiter, Waze Directions)",
       "url": "https://food.grab.com or https://wa.me/639123456789 or #",
       "icon": "shopping-bag",
       "badge": "Order Now",
@@ -52,9 +59,33 @@ Output strictly valid JSON with no markdown wrapping or fences, matching this ex
       "badge": "Order Now",
       "isHighlighted": true
     }
+  ],
+  "suggestedCategories": [
+    {
+      "name": "Category Name (e.g. Signature Coolers, Mains, Specialty Coffee, Pastries)",
+      "items": [
+        {
+          "name": "Item Name (e.g. Mango Graham Shake)",
+          "description": "Appetizing 1-sentence description",
+          "price": 140,
+          "tags": ["bestseller"],
+          "isFeatured": true
+        }
+      ]
+    }
   ],`;
     } else {
       prompt += `
+  "subtitle": "Professional Title, Role, or Brand Tagline",
+  "bio": "Compelling 1-2 sentence bio or brand story",
+  "badgeText": "Floating Status / Announcement Ribbon (e.g. 'Open for Collabs', 'Available for Hire', 'Founder') or null",
+  "contactInfo": {
+    "email": "contact@email.com or null",
+    "phone": "+639123456789 or null",
+    "location": "City, Country or null",
+    "company": "Company Name or null",
+    "website": "https://... or null"
+  },
   "suggestedButtons": [
     {
       "title": "Button Title (e.g. Order via GrabFood, Shopee Store, Follow on Instagram, Book Appointment, Call Us)",
@@ -120,10 +151,14 @@ CRITICAL CONTRAST & READABILITY RULES:
 9. "bgPattern" must be one of: "none", "grain", "dots", "grid", "mesh".`;
 
   if (mode === "full") {
-    prompt += `\n\nAI BUTTON & COMPONENT BUILDER ACTIVATED:
-You MUST generate 2 to 4 actual clickable buttons in "suggestedButtons" AND "suggestedActionButtons" matching the user's explicit request or brand theme (e.g. Shopee, Grab, Instagram, Reserve Table, WiFi, Call).
-For "suggestedButtons": platform must be one of "instagram" | "facebook" | "shopee" | "lazada" | "tiktok" | "spotify" | "youtube" | "whatsapp" | "phone" | "email" | "website" | "custom", category one of "featured" | "social" | "contact" | "products" | "other".
-For "suggestedActionButtons": icon must be one of "calendar" | "phone" | "shopping-bag" | "instagram" | "facebook" | "globe" | "message-circle".`;
+    prompt += `\n\nAUTONOMOUS AI PAGE, CONTENT & FUNCTION BUILDER ACTIVATED:
+You are not just a color picker. You are a complete autonomous AI Page and Business Builder that literally implements any feature, function, section, or content the user requests:
+1. FUNCTION & ACTION BUTTONS: If the user asks for buttons, links, or functional features (WiFi, Table Reservation, GrabFood, Shopee, Call, WhatsApp, Location/Maps, Socials), generate them in "suggestedActionButtons" and "suggestedButtons".
+2. MENU CATEGORIES & ITEMS: If the user asks to add or generate menu categories, food, drinks, or dishes (e.g. "maglagay ka ng Drinks category", "add desserts with prices"), generate them with appetizing names, descriptions, realistic prices (PHP), and tags in "suggestedCategories". If they did not ask for menu items, you may omit "suggestedCategories" or keep it empty.
+3. BUSINESS INFO & STORE HOURS: If the user provides or asks for store hours, address, phone number, email, or location, populate them in "contactInfo".
+4. ANNOUNCEMENT & PROMO RIBBON: If the user asks for a promo, announcement, or banner (e.g. "Buy 1 Take 1", "Open Daily", "20% Off"), set it in "badgeText".
+5. BIO & STORY: If the user asks for bio or role, craft a captivating bio in "bio" and role in "subtitle".
+6. VISUAL BRAND IDENTITY: Author the matching bespoke theme palette and custom CSS for this brand concept.`;
   }
 
   if (hasImage && userPrompt) {
@@ -232,7 +267,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 950,
+      max_tokens: 1500,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -253,7 +288,7 @@ async function scanWithGroq(
         },
       ],
       temperature: 0.2,
-      max_tokens: 950,
+      max_tokens: 1500,
     });
 
     const text = completion.choices[0]?.message?.content?.trim();
@@ -352,13 +387,13 @@ export async function POST(request: Request) {
     const requestedMode = (formData.get("mode") as string) === "full" ? "full" : "theme_only";
     const targetType = (formData.get("targetType") as string) === "menu" ? "menu" : "profile";
 
-    // Auto-detect if user prompt explicitly requests buttons, links, or ordering platforms in Tagalog or English
-    const asksForButtons =
-      /\b(button|buttons|pindutan|butones|link|links|shopee|grab|grabfood|foodpanda|lazada|instagram|ig|facebook|fb|whatsapp|tiktok|wifi|reserve|reservation|booking|call|contact|order|tawag)\b/i.test(
+    // Auto-detect if user prompt requests functions, features, menu items, sections, buttons, or store info in Tagalog or English
+    const asksForFullFeatures =
+      /\b(button|buttons|pindutan|butones|link|links|shopee|grab|grabfood|foodpanda|lazada|instagram|ig|facebook|fb|whatsapp|tiktok|wifi|reserve|reservation|booking|book|call|contact|order|tawag|oras|hours|schedule|bukas|address|lugar|location|promo|announcement|sale|banner|ribbon|item|items|ulam|pagkain|menu|category|kategorya|drinks|food|kape|coffee|dessert|price|presyo|bio|subtitle|function|dagdag|add|lagyan)\b/i.test(
         promptText
       );
 
-    const wantsFullMode = requestedMode === "full" || asksForButtons;
+    const wantsFullMode = requestedMode === "full" || asksForFullFeatures;
 
     // Permission check: default to visual theme only unless Super Admin granted allowAiPageBuilder
     let effectiveMode: "theme_only" | "full" = "theme_only";
