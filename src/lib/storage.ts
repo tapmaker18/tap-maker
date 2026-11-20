@@ -1,6 +1,8 @@
 import { Profile } from "./types";
 import { DEFAULT_PROFILES } from "./defaultProfiles";
 import { db, isFirebaseConfigured } from "./firebase";
+import { assertDocSize } from "./docSize";
+import { checkSlugRemote, createAssetRemote, canUseRemoteAssets } from "./assetApi";
 import {
   collection,
   doc,
@@ -195,6 +197,12 @@ export async function isSlugAvailable(
   const cleanSlug = slug.toLowerCase().trim();
   if (RESERVED_SLUGS.includes(cleanSlug)) return false;
 
+  // Authoritative server check (client queries cannot see other members' drafts)
+  if (isFirebaseConfigured) {
+    const remote = await checkSlugRemote("profile", cleanSlug, excludeProfileId);
+    if (remote !== null) return remote;
+  }
+
   // Check Firestore first
   if (isFirebaseConfigured && db) {
     try {
@@ -226,11 +234,16 @@ export async function saveProfile(profile: Profile): Promise<Profile> {
         : profile.publishedAt,
   };
 
+  assertDocSize(updated);
+
   if (isFirebaseConfigured && db) {
     try {
-      await setDoc(doc(db, "profiles", updated.id), updated);
+      await setDoc(doc(db, "profiles", updated.id), JSON.parse(JSON.stringify(updated)));
     } catch (err) {
       console.error("Firestore setDoc failed:", err);
+      throw new Error(
+        "Hindi na-save sa cloud ang profile. Check your internet connection o permissions, then try again."
+      );
     }
   }
 
@@ -285,5 +298,29 @@ export async function duplicateProfile(id: string, userId?: string): Promise<Pro
     publishedAt: undefined,
   };
 
-  return await saveProfile(duplicated);
+  return await createProfile(duplicated);
+}
+
+/**
+ * Create a brand-new profile. When signed in with Firebase, creation goes
+ * through the server so card token limits and slug uniqueness are enforced.
+ */
+export async function createProfile(profile: Profile): Promise<Profile> {
+  const cleaned: Profile = {
+    ...profile,
+    slug: profile.slug.toLowerCase().trim().replace(/[^a-z0-9_-]/g, ""),
+  };
+  // Firestore rejects undefined values; strip them before sending.
+  const payload = JSON.parse(JSON.stringify(cleaned)) as Profile;
+  assertDocSize(payload);
+
+  if (isFirebaseConfigured && canUseRemoteAssets()) {
+    const created = await createAssetRemote<Profile>("profile", payload);
+    const profiles = getLocalProfiles().filter((p) => p.id !== created.id);
+    profiles.unshift(created);
+    saveLocalProfiles(profiles);
+    return created;
+  }
+
+  return await saveProfile(cleaned);
 }

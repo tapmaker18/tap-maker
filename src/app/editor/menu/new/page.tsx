@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { createEmptyMenu, saveMenu, isMenuSlugAvailable, getMenus } from "@/lib/menuStorage";
+import { createEmptyMenu, createMenu, isMenuSlugAvailable, getMenus } from "@/lib/menuStorage";
 import { getProfiles } from "@/lib/storage";
 import { UtensilsCrossed, Lock, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export default function NewMenuPage() {
         newMenu.businessName = "My Café & Kitchen";
         newMenu.tagline = "Fresh Artisanal Brews & Handcrafted Dishes";
 
-        const saved = await saveMenu(newMenu);
+        const saved = await createMenu(newMenu);
         router.replace(`/editor/menu/${saved.id}`);
       } catch (err: any) {
         console.error("Error creating draft menu:", err);
-        setInitError("Failed to initialize menu. Please try again.");
+        setInitError(err?.message || "Failed to initialize menu. Please try again.");
       }
     }
 

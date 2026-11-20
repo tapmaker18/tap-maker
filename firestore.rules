@@ -31,8 +31,9 @@ service cloud.firestore {
       allow read: if resource.data.status == 'published'
                   || isApprovedOwner(resource.data.userId)
                   || isSuperAdmin();
-      allow create: if isApprovedMember()
-                    && request.resource.data.userId == request.auth.uid;
+      // Creation goes through /api/assets (Admin SDK) so card token limits
+      // and slug uniqueness are enforced server-side.
+      allow create: if isSuperAdmin();
       allow update: if (isApprovedOwner(resource.data.userId)
                         && request.resource.data.userId == resource.data.userId)
                     || isSuperAdmin();
@@ -59,8 +60,9 @@ service cloud.firestore {
       allow read: if resource.data.status == 'published'
                   || isApprovedOwner(resource.data.userId)
                   || isSuperAdmin();
-      allow create: if isApprovedMember()
-                    && request.resource.data.userId == request.auth.uid;
+      // Creation goes through /api/assets (Admin SDK) so card token limits
+      // and slug uniqueness are enforced server-side.
+      allow create: if isSuperAdmin();
       allow update: if (isApprovedOwner(resource.data.userId)
                         && request.resource.data.userId == resource.data.userId)
                     || isSuperAdmin();

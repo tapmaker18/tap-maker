@@ -341,7 +341,13 @@ export default function DashboardPage() {
   }, [user, isAdmin, isPending, isSuspended]);
 
   const handleDuplicate = async (id: string) => {
-    const dup = await duplicateProfile(id, user?.uid);
+    let dup: Profile | null = null;
+    try {
+      dup = await duplicateProfile(id, user?.uid);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate profile.");
+      return;
+    }
     if (dup) {
       await loadProfiles();
       router.push(`/editor/${dup.id}`);
@@ -357,10 +363,14 @@ export default function DashboardPage() {
 
   const handleTogglePublish = async (profile: Profile) => {
     const newStatus = profile.status === "published" ? "draft" : "published";
-    await saveProfile({
-      ...profile,
-      status: newStatus,
-    });
+    try {
+      await saveProfile({
+        ...profile,
+        status: newStatus,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update profile status.");
+    }
     await loadProfiles();
   };
 
@@ -372,7 +382,13 @@ export default function DashboardPage() {
   };
 
   const handleDuplicateMenu = async (id: string) => {
-    const dup = await duplicateMenu(id, user?.uid);
+    let dup: Menu | null = null;
+    try {
+      dup = await duplicateMenu(id, user?.uid);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to duplicate menu.");
+      return;
+    }
     if (dup) {
       await loadMenus();
       router.push(`/editor/menu/${dup.id}`);

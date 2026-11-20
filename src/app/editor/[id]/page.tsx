@@ -193,7 +193,15 @@ export default function EditorPage() {
       status: publishStatus || profile.status,
     };
 
-    const saved = await saveProfile(updatedProfile);
+    let saved: Profile;
+    try {
+      saved = await saveProfile(updatedProfile);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      alert(err instanceof Error ? err.message : "Failed to save changes. Please try again.");
+      setIsSaving(false);
+      return;
+    }
     setProfile(saved);
     setIsSaving(false);
     setSaveSuccess(true);

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { saveProfile, isSlugAvailable, getProfiles } from "@/lib/storage";
+import { createProfile, isSlugAvailable, getProfiles } from "@/lib/storage";
 import { getMenus } from "@/lib/menuStorage";
 import { Profile } from "@/lib/types";
 import { Sparkles, Lock, ArrowRight } from "lucide-react";
@@ -138,11 +138,11 @@ export default function NewProfilePage() {
           userId: user?.uid,
         };
 
-        const saved = await saveProfile(newProfile);
+        const saved = await createProfile(newProfile);
         router.replace(`/editor/${saved.id}`);
       } catch (err: any) {
         console.error("Error creating draft profile:", err);
-        setInitError("Failed to initialize profile. Please try again.");
+        setInitError(err?.message || "Failed to initialize profile. Please try again.");
       }
     }
 

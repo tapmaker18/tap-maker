@@ -1,5 +1,7 @@
 import { Menu, MenuCategory, MenuItem, MenuThemeSettings, MenuContactInfo } from "./types";
 import { db, isFirebaseConfigured } from "./firebase";
+import { assertDocSize } from "./docSize";
+import { checkSlugRemote, createAssetRemote, canUseRemoteAssets } from "./assetApi";
 import {
   collection,
   doc,
@@ -189,6 +191,12 @@ export async function isMenuSlugAvailable(
   const cleanSlug = slug.toLowerCase().trim();
   if (RESERVED_MENU_SLUGS.includes(cleanSlug)) return false;
 
+  // Authoritative server check (client queries cannot see other members' drafts)
+  if (isFirebaseConfigured) {
+    const remote = await checkSlugRemote("menu", cleanSlug, excludeMenuId);
+    if (remote !== null) return remote;
+  }
+
   if (isFirebaseConfigured && db) {
     try {
       const q = query(collection(db, "menus"), where("slug", "==", cleanSlug));
@@ -218,11 +226,16 @@ export async function saveMenu(menu: Menu): Promise<Menu> {
     updatedAt: now,
   };
 
+  assertDocSize(updated);
+
   if (isFirebaseConfigured && db) {
     try {
-      await setDoc(doc(db, "menus", updated.id), updated);
+      await setDoc(doc(db, "menus", updated.id), JSON.parse(JSON.stringify(updated)));
     } catch (err) {
       console.error("Firestore saveMenu failed:", err);
+      throw new Error(
+        "Hindi na-save sa cloud ang menu. Check your internet connection o permissions, then try again."
+      );
     }
   }
 
@@ -282,5 +295,28 @@ export async function duplicateMenu(id: string, userId?: string): Promise<Menu |
     updatedAt: new Date().toISOString(),
   };
 
-  return await saveMenu(duplicated);
+  return await createMenu(duplicated);
+}
+
+/**
+ * Create a brand-new menu. When signed in with Firebase, creation goes
+ * through the server so card token limits and slug uniqueness are enforced.
+ */
+export async function createMenu(menu: Menu): Promise<Menu> {
+  const cleaned: Menu = {
+    ...menu,
+    slug: menu.slug.toLowerCase().trim().replace(/[^a-z0-9_-]/g, ""),
+  };
+  const payload = JSON.parse(JSON.stringify(cleaned)) as Menu;
+  assertDocSize(payload);
+
+  if (isFirebaseConfigured && canUseRemoteAssets()) {
+    const created = await createAssetRemote<Menu>("menu", payload);
+    const menus = getLocalMenus().filter((m) => m.id !== created.id);
+    menus.unshift(created);
+    saveLocalMenus(menus);
+    return created;
+  }
+
+  return await saveMenu(cleaned);
 }

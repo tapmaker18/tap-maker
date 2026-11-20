@@ -335,7 +335,7 @@ export default function MenuEditorPage() {
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
       console.error("Error saving menu:", err);
-      alert("Failed to save changes. Please try again.");
+      alert(err instanceof Error ? err.message : "Failed to save changes. Please try again.");
     } finally {
       setSaving(false);
     }

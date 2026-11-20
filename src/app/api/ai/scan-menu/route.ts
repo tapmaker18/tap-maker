@@ -94,6 +94,22 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
   });
 }
 
+async function refundScan(uid: string, isAdmin: boolean): Promise<void> {
+  if (isAdmin) return;
+  const userRef = getAdminDb().collection("users").doc(uid);
+  try {
+    await getAdminDb().runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(userRef);
+      const used = snapshot.data()?.aiScansUsed;
+      if (typeof used === "number" && used > 0) {
+        transaction.update(userRef, { aiScansUsed: used - 1 });
+      }
+    });
+  } catch (err) {
+    console.warn("AI quota refund failed:", err);
+  }
+}
+
 // ── Gemini ────────────────────────────────────────────────────────
 async function scanWithGemini(apiKey: string, buffer: Buffer, mimeType: string): Promise<string> {
   const models = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-2.5-flash"];
@@ -191,45 +207,53 @@ export async function POST(request: Request) {
       throw new ApiError("AI Menu Scan is not configured. Contact the Super Admin.", 503);
     }
 
-    await consumeScan(decoded.uid, decoded.role === SUPER_ADMIN_ROLE);
+    const isAdminCaller = decoded.role === SUPER_ADMIN_ROLE;
+    await consumeScan(decoded.uid, isAdminCaller);
 
-    const buffer = Buffer.from(await image.arrayBuffer());
-    let text = "";
-    let usedProvider = "";
-
-    // Prioritize Groq (fast, high-precision OCR with qwen3.8-27b)
-    if (groqKey) {
-      try {
-        text = await scanWithGroq(groqKey, buffer, image.type);
-        usedProvider = "groq";
-      } catch (groqError) {
-        console.warn("[AI Scan] Groq failed, trying Gemini fallback:", (groqError as Error).message);
-        if (geminiKey) {
-          text = await scanWithGemini(geminiKey, buffer, image.type);
-          usedProvider = "gemini";
-        } else {
-          throw groqError;
-        }
-      }
-    } else if (geminiKey) {
-      text = await scanWithGemini(geminiKey, buffer, image.type);
-      usedProvider = "gemini";
-    }
-
-    // Strip markdown code fences if present
-    if (text.startsWith("```")) {
-      text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-    }
-
-    let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(text) as Record<string, unknown>;
-    } catch {
-      throw new ApiError("AI returned an unreadable menu. Please try a clearer image.", 502);
-    }
 
-    const result = toMenuResult(parsed);
-    return NextResponse.json({ ...result, _provider: usedProvider });
+      const buffer = Buffer.from(await image.arrayBuffer());
+      let text = "";
+      let usedProvider = "";
+
+      // Prioritize Groq (fast, high-precision OCR with qwen3.8-27b)
+      if (groqKey) {
+        try {
+          text = await scanWithGroq(groqKey, buffer, image.type);
+          usedProvider = "groq";
+        } catch (groqError) {
+          console.warn("[AI Scan] Groq failed, trying Gemini fallback:", (groqError as Error).message);
+          if (geminiKey) {
+            text = await scanWithGemini(geminiKey, buffer, image.type);
+            usedProvider = "gemini";
+          } else {
+            throw groqError;
+          }
+        }
+      } else if (geminiKey) {
+        text = await scanWithGemini(geminiKey, buffer, image.type);
+        usedProvider = "gemini";
+      }
+
+      // Strip markdown code fences if present
+      if (text.startsWith("```")) {
+        text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+      }
+
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(text) as Record<string, unknown>;
+      } catch {
+        throw new ApiError("AI returned an unreadable menu. Please try a clearer image.", 502);
+      }
+
+      const result = toMenuResult(parsed);
+      return NextResponse.json({ ...result, _provider: usedProvider });
+    } catch (scanErr) {
+      // Do not charge the member for a failed scan
+      await refundScan(decoded.uid, isAdminCaller);
+      throw scanErr;
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to scan the menu.";
     const status = error instanceof ApiError ? error.status : 500;
