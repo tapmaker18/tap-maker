@@ -46,7 +46,7 @@ export const CustomerDashboard: React.FC = () => {
         <div>
           <h1 className="text-xl font-extrabold text-white">Your Digital Menus</h1>
           <p className="text-xs text-slate-400 mt-1">
-            I-update ang items, presyo, at oras anytime. Live agad ang changes pagka-save.
+            Update your menu items, prices, and store hours anytime. Changes go live immediately after saving.
           </p>
         </div>
 
@@ -61,8 +61,8 @@ export const CustomerDashboard: React.FC = () => {
         ) : menus.length === 0 && !error ? (
           <div className="p-10 rounded-2xl bg-slate-900 border border-dashed border-slate-700 text-center">
             <UtensilsCrossed className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-            <p className="text-sm font-bold text-slate-300">Wala pang menu na naka-assign sa'yo</p>
-            <p className="text-xs text-slate-500 mt-1">Makipag-ugnayan sa provider mo para ma-assign ang menu.</p>
+            <p className="text-sm font-bold text-slate-300">No digital menus assigned to your account yet</p>
+            <p className="text-xs text-slate-500 mt-1">Please contact your menu provider to have your menu assigned.</p>
           </div>
         ) : (
           <div className="grid gap-3">

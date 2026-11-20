@@ -11,9 +11,9 @@ export function getDocSizeBytes(data: unknown): number {
 export class DocTooLargeError extends Error {
   constructor(public readonly bytes: number) {
     super(
-      `Hindi ma-save: ${Math.round(bytes / 1024)}KB na ang laki ng data (max ~${Math.round(
+      `Unable to save: Document size is ${Math.round(bytes / 1024)} KB (maximum allowed is ~${Math.round(
         MAX_DOC_BYTES / 1024
-      )}KB). Bawasan o paliitin ang mga images (logo, cover, item photos).`
+      )} KB). Please remove or compress some images (logo, cover, or item photos).`
     );
     this.name = "DocTooLargeError";
   }

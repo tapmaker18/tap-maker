@@ -234,7 +234,7 @@ export async function saveMenu(menu: Menu): Promise<Menu> {
     } catch (err) {
       console.error("Firestore saveMenu failed:", err);
       throw new Error(
-        "Hindi na-save sa cloud ang menu. Check your internet connection o permissions, then try again."
+        "Failed to save menu to the cloud. Please check your internet connection or permissions and try again."
       );
     }
   }

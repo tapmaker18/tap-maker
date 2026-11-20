@@ -661,8 +661,8 @@ export const VisualDesignStudioPanel: React.FC<VisualDesignStudioPanelProps> = (
                 }}
                 placeholder={
                   studioBuilderMode === "full"
-                    ? "e.g. Bio bilang Tech Founder sa BGC, Calendly booking, LinkedIn, WiFi details, at futuristic dark neon theme..."
-                    : "e.g. Modern executive glassmorphism, o aesthetic na cafe na may kahoy at ginto..."
+                    ? "e.g. Tech Founder bio in BGC, Calendly booking, LinkedIn, WiFi details, and futuristic dark neon theme..."
+                    : "e.g. Modern executive glassmorphism, or warm artisan wood and gold cafe..."
                 }
                 className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
               />

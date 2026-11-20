@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       };
 
       if (getDocSizeBytes(doc) > MAX_DOC_BYTES) {
-        throw new ApiError("Masyadong malaki ang data (lampas 1MB). Bawasan ang images.", 413);
+        throw new ApiError("Document size exceeds the 1 MB limit. Please reduce or compress your images.", 413);
       }
 
       const userRef = db.collection("users").doc(decoded.uid);
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
           const limit = typeof account.cardTokensLimit === "number" ? account.cardTokensLimit : 1;
           if (used >= limit) {
             throw new ApiError(
-              `Card Token Limit Reached! Nagamit mo na lahat ng ${limit} slot(s) (${profilesSnap.size} profiles, ${menusSnap.size} menus). Contact the Super Admin to order more cards.`,
+              `Card Token Limit Reached! You have used all ${limit} digital slot(s) (${profilesSnap.size} profiles, ${menusSnap.size} menus). Contact the Super Admin to order more cards.`,
               403
             );
           }

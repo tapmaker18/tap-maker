@@ -242,7 +242,7 @@ export async function saveProfile(profile: Profile): Promise<Profile> {
     } catch (err) {
       console.error("Firestore setDoc failed:", err);
       throw new Error(
-        "Hindi na-save sa cloud ang profile. Check your internet connection o permissions, then try again."
+        "Failed to save profile to the cloud. Please check your internet connection or permissions and try again."
       );
     }
   }

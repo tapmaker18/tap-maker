@@ -2082,8 +2082,8 @@ export default function MenuEditorPage() {
                       }}
                       placeholder={
                         menuBuilderMode === "full"
-                          ? "e.g. Dagdag ka ng Summer Coolers category na may 3 drinks at presyo, Table Reservation button, Store Hours 9am-10pm, at warm aesthetic cafe theme..."
-                          : "e.g. Mamahaling BGC cafe na may kahoy at ginto, Cyberpunk neon, o Rustic Italian..."
+                          ? "e.g. Add a Summer Coolers category with 3 drinks and prices, a Table Reservation button, store hours 9am-10pm, and a warm aesthetic cafe theme..."
+                          : "e.g. Upscale artisan cafe with wood & gold, Cyberpunk neon, or Rustic Italian bistro..."
                       }
                       className="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-all"
                     />

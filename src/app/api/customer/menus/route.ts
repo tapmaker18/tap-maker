@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
         if (expectedUpdatedAt && current.updatedAt !== expectedUpdatedAt) {
           throw new ApiError(
-            "May ibang nag-edit ng menu habang bukas ito. I-reload muna para makita ang latest bago mag-save.",
+            "This menu was updated in another session while you had it open. Please reload the page to get the latest version before saving.",
             409
           );
         }
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         const next = { ...current, ...updates, updatedAt: now, updatedBy: caller.uid };
         const clean = JSON.parse(JSON.stringify(next));
         if (getDocSizeBytes(clean) > MAX_DOC_BYTES) {
-          throw new ApiError("Masyadong malaki ang menu (lampas 1MB). Bawasan o paliitin ang item photos.", 413);
+          throw new ApiError("Menu data exceeds the 1 MB limit. Please reduce or compress item photos.", 413);
         }
 
         tx.set(menuRef, clean);

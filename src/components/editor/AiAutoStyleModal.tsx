@@ -251,9 +251,9 @@ export const AiAutoStyleModal: React.FC<AiAutoStyleModalProps> = ({
                   placeholder={
                     builderMode === "full"
                       ? targetType === "menu"
-                        ? "e.g. Dagdag ka ng Summer Coolers category na may 3 drinks at presyo, Table Reservation button, Store Hours 9am-10pm, at warm aesthetic cafe theme..."
-                        : "e.g. Gawan mo ko ng profile na may bio bilang Tech CEO sa BGC, Calendly booking, LinkedIn, WiFi details, at futuristic dark neon theme..."
-                      : "e.g. Mamahaling lounge na may ginto at itim, Maaliwalas na aesthetic cafe, o Cyberpunk neon..."
+                        ? "e.g. Add a Summer Coolers category with 3 drinks and prices, a Table Reservation button, store hours 9am-10pm, and a warm aesthetic cafe theme..."
+                        : "e.g. Create a Tech CEO profile in BGC with a Calendly booking button, LinkedIn, WiFi details, and a futuristic dark neon theme..."
+                      : "e.g. Luxury gold & black lounge, warm artisan wood cafe, or futuristic cyberpunk neon..."
                   }
                   className="w-full text-xs bg-slate-950 border border-slate-800 rounded-2xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all resize-none leading-relaxed"
                 />

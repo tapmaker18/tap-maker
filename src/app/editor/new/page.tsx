@@ -171,7 +171,7 @@ export default function NewProfilePage() {
           </div>
           <h2 className="text-xl font-bold text-white">Sign Up or Sign In to create your profile</h2>
           <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-            Kailangan mag-sign in o mag-sign up muna bago makapag-create at makapag-customize ng iyong official digital profile template.
+            Please sign in or create an account first to build and customize your official digital profile.
           </p>
           <Link
             href="/login?redirect=/editor/new"

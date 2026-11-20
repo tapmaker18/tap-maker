@@ -35,8 +35,8 @@ const PRESET_LABEL: Record<CustomerPreset, string> = {
 };
 
 const PRESET_HELP: Record<CustomerPreset, string> = {
-  content: "Items, prices, categories, contact info at action buttons. Hindi kasama ang design/theme.",
-  quick_edit: "Presyo, Available/Sold Out, at opening hours lang. Pang-staff o simpleng updates.",
+  content: "Edit items, prices, categories, contact info, and action buttons. Theme and brand design stay locked.",
+  quick_edit: "Edit prices, Available / Sold Out status, and opening hours only. Ideal for staff or daily updates.",
 };
 
 interface CustomersPanelProps {
@@ -126,7 +126,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.menuId) {
-      alert("Pumili muna ng menu na ibibigay sa customer.");
+      alert("Please select a menu to hand over to the customer.");
       return;
     }
     setBusy("create");
@@ -178,7 +178,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
   };
 
   const shareMessage = (email: string, link: string) =>
-    `Hi! Ito ang access mo para ma-edit ang digital menu ninyo.\n\n1) Buksan ang link na ito para i-set ang password mo:\n${link}\n\n2) Pagkatapos, mag-login dito gamit ang ${email}:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`;
+    `Hi! Here is your login access to manage and update your digital menu.\n\n1) Open this one-time link to set your password:\n${link}\n\n2) Then sign in here using ${email}:\n${typeof window !== "undefined" ? window.location.origin : ""}/login`;
 
   return (
     <div className="space-y-5">
@@ -190,8 +190,8 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
             {isAdmin ? "All Customer Accounts" : "My Customers"}
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            Bigyan ng sariling login ang nabentahan mo ng menu para sila na mismo ang mag-update ng items, presyo
-            at oras. Hindi nila magagalaw ang design.
+            Give your restaurant or business clients their own login so they can update menu items, prices, and hours
+            anytime while keeping your custom design locked.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
       {menus.length === 0 && (
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
           <Info className="w-4 h-4 text-slate-500" />
-          Gumawa muna ng Digital Menu bago mag-add ng customer.
+          Create a Digital Menu first before adding a customer account.
         </div>
       )}
 
@@ -242,12 +242,12 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h4 className="text-sm font-bold text-emerald-300">
-                {setupResult.reused ? "Menu assigned sa existing customer" : "Customer access ready!"}
+                {setupResult.reused ? "Menu assigned to existing customer" : "Customer access ready!"}
               </h4>
               <p className="text-xs text-slate-300 mt-1">
                 {setupResult.reused
-                  ? `Makikita na ni ${setupResult.email} ang menu sa susunod na login niya.`
-                  : `I-send kay ${setupResult.email} ang setup link (Messenger, Viber, SMS o email). Siya ang magse-set ng sarili niyang password.`}
+                  ? `${setupResult.email} will see this menu the next time they sign in.`
+                  : `Send this setup link to ${setupResult.email} via Messenger, Viber, SMS, or email so they can set their own password.`}
               </p>
             </div>
             <button onClick={() => setSetupResult(null)} className="text-slate-400 hover:text-white cursor-pointer">
@@ -275,10 +275,10 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
                 onClick={() => copyLink(shareMessage(setupResult.email, setupResult.link!))}
                 className="text-[11px] font-bold text-emerald-300 hover:text-emerald-200 underline cursor-pointer"
               >
-                Copy ready-to-send message (Taglish)
+                Copy ready-to-send welcome message
               </button>
               <p className="text-[10px] text-slate-500">
-                Ang link ay one-time use at nag-e-expire. Pwede kang gumawa ulit gamit ang “Setup link” button.
+                This link is one-time use and expires automatically. You can generate a new one anytime using the “Setup link” button.
               </p>
             </>
           )}
@@ -302,7 +302,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
 
           {seatsFull && (
             <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5">
-              Puno na ang customer seats mo. Pwede ka pa ring mag-assign ng menu sa <b>existing</b> customer email.
+              All customer seats are currently used. You can still assign a menu to an <b>existing</b> customer email.
             </p>
           )}
 
@@ -398,8 +398,8 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
       ) : customers.length === 0 ? (
         <div className="p-10 rounded-2xl bg-slate-900 border border-dashed border-slate-700 text-center">
           <Users className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-          <p className="text-sm font-bold text-slate-300">Wala pang customer accounts</p>
-          <p className="text-xs text-slate-500 mt-1">I-click ang “Add Customer” para i-handover ang isang menu.</p>
+          <p className="text-sm font-bold text-slate-300">No customer accounts yet</p>
+          <p className="text-xs text-slate-500 mt-1">Click “Add Customer” to hand over edit access for a menu.</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -459,7 +459,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Delete customer ${c.email}? Mawawala ang access nila sa lahat ng menus.`)) {
+                        if (confirm(`Delete customer ${c.email}? Their access to all assigned menus will be revoked.`)) {
                           run(`del-${c.uid}`, () => deleteCustomer(c.uid));
                         }
                       }}
@@ -577,7 +577,7 @@ export const CustomersPanel: React.FC<CustomersPanelProps> = ({
                 <p className="text-xs text-slate-500 text-center py-6">Loading edit history…</p>
               ) : historyModal.entries.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-6">
-                  Wala pang customer edits sa menu na ito.
+                  No customer edits recorded for this menu yet.
                 </p>
               ) : (
                 historyModal.entries.map((entry) => (
