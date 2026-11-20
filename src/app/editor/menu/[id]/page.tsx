@@ -292,10 +292,9 @@ export default function MenuEditorPage() {
           return;
         }
 
-        // Verify ownership (unless admin)
+        // Verify ownership (unless admin). Customers use their dedicated editor.
         if (data.userId && user?.uid && data.userId !== user.uid && !isAdmin) {
-          alert("You do not have permission to edit this menu.");
-          router.push("/dashboard");
+          router.replace(`/customer/menu/${menuId}`);
           return;
         }
 

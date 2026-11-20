@@ -21,6 +21,8 @@ interface AuthContextType {
   loading: boolean;
   role: UserRole | null;
   isAdmin: boolean;
+  isClient: boolean;
+  isCustomer: boolean;
   isSuperAdminCandidate: boolean;
   adminSetupRequired: boolean;
   isApproved: boolean;
@@ -39,6 +41,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   role: null,
   isAdmin: false,
+  isClient: false,
+  isCustomer: false,
   isSuperAdminCandidate: false,
   adminSetupRequired: false,
   isApproved: false,
@@ -92,6 +96,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(SUPER_ADMIN_ROLE);
         setAdminSetupRequired(false);
         return true;
+      }
+
+      if (tokenResult.claims.role === "customer") {
+        setIsAdmin(false);
+        setRole("customer");
+        setAdminSetupRequired(false);
+        return false;
       }
     } catch (err) {
       console.warn("Unable to resolve Super Admin claim:", err);
@@ -223,6 +234,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await sendEmailVerification(user);
   };
 
+  const effectiveRole: UserRole | null = isAdmin
+    ? SUPER_ADMIN_ROLE
+    : role || memberAccount?.role || null;
+  const isCustomer = !isAdmin && effectiveRole === "customer";
+  const isClient = !isAdmin && effectiveRole === "member";
   const isApproved = isAdmin || memberAccount?.status === "approved";
   const isPending = !isAdmin && (!memberAccount || memberAccount.status === "pending");
   const isSuspended = !isAdmin && memberAccount?.status === "suspended";
@@ -233,8 +249,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         memberAccount,
         loading,
-        role: isAdmin ? SUPER_ADMIN_ROLE : role || memberAccount?.role || null,
+        role: effectiveRole,
         isAdmin,
+        isClient,
+        isCustomer,
         isSuperAdminCandidate: isSuperAdminEmail(user?.email),
         adminSetupRequired,
         isApproved,

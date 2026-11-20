@@ -227,7 +227,28 @@ export interface Menu {
 // Member & User Account Types (B2B SaaS Approval Workflow)
 // ============================================================
 export type AccountStatus = "pending" | "approved" | "suspended";
-export type UserRole = "super_admin" | "member";
+export type UserRole = "super_admin" | "member" | "customer";
+
+// Customer (end-business) edit permissions on an assigned menu
+export type CustomerPreset = "content" | "quick_edit";
+
+export interface MenuAccess {
+  menuId: string;
+  ownerId: string; // client (menu owner)
+  editorIds: string[]; // customer uids with edit access
+  editors: Record<string, CustomerPreset>; // uid -> preset
+  updatedAt: string;
+}
+
+export interface MenuChangeLogEntry {
+  id: string;
+  menuId: string;
+  actorUid: string;
+  actorEmail?: string;
+  actorRole: UserRole;
+  changes: string[];
+  createdAt: string;
+}
 
 export interface MemberAccount {
   uid: string;
@@ -242,6 +263,7 @@ export interface MemberAccount {
   aiScansUsed: number;
   cardTokensLimit?: number;
   allowAiPageBuilder?: boolean; // Super Admin permission toggle: allows AI button & component builder
+  parentClientId?: string | null; // customer accounts: uid of the client who created them
   createdAt: string;
   approvedAt?: string | null;
   lastLoginAt?: string | null;

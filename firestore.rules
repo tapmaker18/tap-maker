@@ -14,12 +14,15 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Normal members can use the studio only after Super Admin approval.
+    // Normal members (clients) can use the studio only after Super Admin approval.
+    // Customer sub-accounts do not write directly to Firestore; they go through /api/customer/menus.
     function isApprovedMember() {
       return isSuperAdmin() || (
         isAuthenticated()
+        && request.auth.token.role != 'customer'
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role != 'customer'
       );
     }
 
@@ -67,6 +70,17 @@ service cloud.firestore {
                         && request.resource.data.userId == resource.data.userId)
                     || isSuperAdmin();
       allow delete: if isApprovedOwner(resource.data.userId) || isSuperAdmin();
+
+      match /changelog/{entryId} {
+        allow read: if isApprovedOwner(get(/databases/$(database)/documents/menus/$(menuId)).data.userId)
+                    || isSuperAdmin();
+        allow write: if isSuperAdmin();
+      }
+    }
+
+    match /menuAccess/{menuId} {
+      allow read: if isApprovedOwner(resource.data.ownerId) || isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /users/{userId} {

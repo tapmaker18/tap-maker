@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export default function NewProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading, isPending, isSuspended, isAdmin, memberAccount } = useAuth();
+  const { user, loading: authLoading, isPending, isSuspended, isAdmin, isCustomer, memberAccount } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function NewProfilePage() {
       return;
     }
 
-    if (isPending || isSuspended) {
+    if (isPending || isSuspended || isCustomer) {
       router.push("/dashboard");
       return;
     }

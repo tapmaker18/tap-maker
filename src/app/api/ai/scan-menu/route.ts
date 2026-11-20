@@ -80,6 +80,9 @@ async function consumeScan(uid: string, isAdmin: boolean): Promise<void> {
     }
 
     const account = snapshot.data();
+    if (account?.role === "customer") {
+      throw new ApiError("Customer accounts cannot use AI Menu Scan.", 403);
+    }
     if (account?.status !== "approved") {
       throw new ApiError("Your account must be approved before using AI Menu Scan.", 403);
     }

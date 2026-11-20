@@ -102,8 +102,8 @@ export async function POST(request: Request) {
         if (!isAdmin) {
           const userSnap = await tx.get(userRef);
           const account = userSnap.data();
-          if (!userSnap.exists || account?.status !== "approved") {
-            throw new ApiError("Your account must be approved before creating content.", 403);
+          if (!userSnap.exists || account?.status !== "approved" || account?.role === "customer") {
+            throw new ApiError("Your account is not authorized to create new profiles or menus.", 403);
           }
 
           const [profilesSnap, menusSnap] = await Promise.all([
