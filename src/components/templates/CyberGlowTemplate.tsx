@@ -9,6 +9,9 @@ import { ChevronRight, CheckCircle2 } from "lucide-react";
 import {
   getImageFilterStyle,
   getBgPatternStyle,
+  getRootBackgroundStyle,
+  getLinkButtonStyle,
+  getAvatarSizeClass,
   sanitizeCustomCss,
 } from "@/lib/visualEffects";
 
@@ -86,7 +89,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
       ref={containerRef}
       className="relative min-h-screen w-full flex flex-col items-center overflow-x-hidden selection:bg-purple-500 selection:text-white tmaker-profile-root"
       style={{
-        backgroundColor: themeSettings.bgPrimary,
+        ...getRootBackgroundStyle(themeSettings),
         color: themeSettings.textColor,
         fontFamily: themeSettings.fontFamily,
       }}
@@ -99,9 +102,34 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         />
       )}
 
+      {/* Optional Full-Bleed Top Hero Cover Banner */}
+      {themeSettings.showHeroBanner && (
+        <div
+          className="relative w-full h-36 sm:h-44 flex-shrink-0 overflow-hidden z-10"
+          style={
+            themeSettings.heroBannerImage
+              ? {
+                  backgroundImage: `url(${themeSettings.heroBannerImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : {
+                  background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+                }
+          }
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom, transparent 20%, ${themeSettings.bgPrimary || "#0a0814"} 100%)`,
+            }}
+          />
+        </div>
+      )}
+
       {getBgPatternStyle(themeSettings.bgPattern) && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          className="absolute inset-0 pointer-events-none opacity-45 z-0"
           style={getBgPatternStyle(themeSettings.bgPattern) || undefined}
         />
       )}
@@ -153,7 +181,11 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
       )}
 
       {/* Main Full-Viewport Responsive Profile Content (No Outer Card Box) */}
-      <main className="relative z-10 w-full max-w-[480px] flex-1 px-5 py-10 flex flex-col items-center gap-7 animate-fade-slide-up">
+      <main
+        className={`relative z-10 w-full max-w-[480px] flex-1 px-5 ${
+          themeSettings.showHeroBanner ? "-mt-16 pb-10" : "py-10"
+        } flex flex-col items-center gap-7 animate-fade-slide-up`}
+      >
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
@@ -168,7 +200,13 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         )}
 
         {/* Profile Header */}
-        <header className="flex flex-col items-center text-center gap-3 w-full">
+        <header
+          className={`flex flex-col gap-3 w-full ${
+            themeSettings.headerAlign === "left"
+              ? "items-start text-left"
+              : "items-center text-center"
+          }`}
+        >
           <div
             className={`relative group tmaker-avatar-wrap ${
               profile.avatarUrl && profile.avatarUrl !== "/image.png" ? "cursor-pointer" : ""
@@ -194,7 +232,7 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                 name={profile.name}
                 avatarUrl={profile.avatarUrl}
                 shapeClass={getAvatarRadius()}
-                className="w-28 h-28"
+                className={getAvatarSizeClass(themeSettings.avatarSize)}
                 accentColor={color1}
                 secondaryAccent={color2}
               />
@@ -202,7 +240,13 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
           </div>
 
           {/* Business / Artist Name */}
-          <div className="flex items-center justify-center gap-2 mt-2 px-4 text-center">
+          <div
+            className={`flex items-center gap-2 mt-2 ${
+              themeSettings.headerAlign === "left"
+                ? "justify-start text-left"
+                : "justify-center text-center px-4"
+            }`}
+          >
             <h1
               className={`font-extrabold tracking-tight break-words leading-tight tmaker-name ${getNameSizeClass(profile.name)}`}
               style={{ color: themeSettings.textColor || "#ffffff" }}
@@ -266,10 +310,18 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                   {sectionTitle}
                 </h2>
 
-                {/* Link Buttons */}
-                <div className="flex flex-col gap-3 w-full">
+                {/* Link Buttons (List or 2-Column Tile Grid) */}
+                <div
+                  className={
+                    themeSettings.linkLayout === "grid"
+                      ? "grid grid-cols-2 gap-3 w-full"
+                      : "flex flex-col gap-3 w-full"
+                  }
+                >
                   {catLinks.map((link) => {
                     const isHighlighted = link.isHighlighted;
+                    const isGrid = themeSettings.linkLayout === "grid";
+                    const btnAppearance = getLinkButtonStyle(themeSettings, isHighlighted);
 
                     return (
                       <a
@@ -283,42 +335,36 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                             onLinkClick(link.id, link.title);
                           }
                         }}
-                        className={`ripple-container relative group flex items-center justify-between p-3.5 border transition-all duration-300 tmaker-link-item ${getButtonRadius()} ${
+                        className={`ripple-container relative group border transition-all duration-300 tmaker-link-item ${getButtonRadius()} ${
+                          isGrid
+                            ? "flex flex-col items-center justify-center text-center p-4 gap-2.5 min-h-[112px]"
+                            : "flex items-center justify-between p-3.5"
+                        } ${
                           isHighlighted
                             ? "shadow-lg shadow-purple-500/10 hover:shadow-purple-500/25 scale-[1.01]"
                             : "hover:translate-y-[-2px]"
                         }`}
-                        style={{
-                          backgroundColor: isHighlighted
-                            ? "rgba(255, 255, 255, 0.08)"
-                            : themeSettings.cardBg,
-                          borderColor: isHighlighted
-                            ? themeSettings.accentColor
-                            : themeSettings.borderColor,
-                          backdropFilter: "blur(12px)",
-                        }}
+                        style={btnAppearance.style}
                       >
-                        {/* Glow outline on highlight */}
-                        {isHighlighted && (
-                          <div
-                            className={`absolute inset-0 ${getButtonRadius()} opacity-25 group-hover:opacity-40 transition-opacity pointer-events-none`}
-                            style={{
-                              background: `linear-gradient(90deg, ${themeSettings.accentColor}44, ${themeSettings.secondaryAccent}44)`,
-                            }}
-                          />
-                        )}
-
-                        {/* Left: Platform Icon */}
+                        {/* Left / Top: Platform Icon */}
                         <div className="relative z-10 flex-shrink-0 w-8 h-8 flex items-center justify-center">
                           <IconMapper platform={link.platform} className="w-7 h-7 object-contain" />
                         </div>
 
                         {/* Middle: Title & Badge */}
-                        <div className="relative z-10 flex-1 px-3 text-left">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <div
+                          className={`relative z-10 ${
+                            isGrid ? "w-full text-center" : "flex-1 px-3 text-left"
+                          }`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 flex-wrap ${
+                              isGrid ? "justify-center" : ""
+                            }`}
+                          >
                             <span
                               className="font-semibold text-sm tracking-tight"
-                              style={{ color: themeSettings.textColor }}
+                              style={{ color: btnAppearance.textColor }}
                             >
                               {link.title}
                             </span>
@@ -336,13 +382,15 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
                           </div>
                         </div>
 
-                        {/* Right: Chevron Arrow */}
-                        <div
-                          className="relative z-10 flex-shrink-0 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all"
-                          style={{ color: themeSettings.textColor }}
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </div>
+                        {/* Right: Chevron Arrow (List mode only) */}
+                        {!isGrid && (
+                          <div
+                            className="relative z-10 flex-shrink-0 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all"
+                            style={{ color: btnAppearance.textColor }}
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
+                        )}
                       </a>
                     );
                   })}

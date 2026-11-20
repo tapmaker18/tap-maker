@@ -4,7 +4,10 @@ export type TemplateId = "cyber-glow" | "modern-bio" | "executive-card";
 
 export type AvatarShape = "circle" | "rounded-square" | "squircle";
 export type ButtonRadius = "sharp" | "rounded" | "pill";
-export type ButtonStyle = "glass" | "gradient" | "outline" | "flat";
+export type ButtonStyle = "glass" | "gradient" | "outline" | "flat" | "shadow";
+export type LinkLayoutMode = "list" | "grid";
+export type HeaderAlignMode = "center" | "left";
+export type AvatarSizeMode = "sm" | "md" | "lg";
 export type ImageFilterPreset = "none" | "vibrant" | "warm" | "noir" | "cyber" | "vintage" | "cool";
 export type BgPatternType = "none" | "grain" | "dots" | "grid" | "mesh";
 export type GlassBlurIntensity = "none" | "sm" | "md" | "lg";
@@ -54,6 +57,12 @@ export interface ThemeSettings {
   glassBlur?: GlassBlurIntensity;
   badgeText?: string;
   badgeColor?: string;
+  // High-Impact Layout & Visual Studio Properties
+  linkLayout?: LinkLayoutMode;
+  headerAlign?: HeaderAlignMode;
+  avatarSize?: AvatarSizeMode;
+  showHeroBanner?: boolean;
+  heroBannerImage?: string;
   // AI Bespoke Visual Design & Custom CSS
   customCss?: string;
   designConcept?: string;
@@ -183,6 +192,12 @@ export interface MenuThemeSettings {
   glassBlur?: GlassBlurIntensity;
   badgeText?: string;
   badgeColor?: string;
+  // High-Impact Layout & Visual Studio Properties
+  linkLayout?: LinkLayoutMode;
+  headerAlign?: HeaderAlignMode;
+  avatarSize?: AvatarSizeMode;
+  showHeroBanner?: boolean;
+  heroBannerImage?: string;
   // AI Bespoke Visual Design & Custom CSS
   customCss?: string;
   designConcept?: string;

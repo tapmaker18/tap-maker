@@ -9,6 +9,7 @@ import {
   getImageFilterStyle,
   getGlassBlurClass,
   getBgPatternStyle,
+  getRootBackgroundStyle,
   sanitizeCustomCss,
 } from "@/lib/visualEffects";
 import {
@@ -79,7 +80,7 @@ END:VCARD`;
     <div
       className="relative min-h-screen w-full flex flex-col items-center justify-start p-4 sm:p-6 tmaker-profile-root"
       style={{
-        backgroundColor: themeSettings.bgPrimary,
+        ...getRootBackgroundStyle(themeSettings),
         color: themeSettings.textColor,
         fontFamily: themeSettings.fontFamily,
       }}
@@ -94,7 +95,7 @@ END:VCARD`;
 
       {getBgPatternStyle(themeSettings.bgPattern) && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-20 z-0"
+          className="absolute inset-0 pointer-events-none opacity-40 z-0"
           style={getBgPatternStyle(themeSettings.bgPattern) || undefined}
         />
       )}
