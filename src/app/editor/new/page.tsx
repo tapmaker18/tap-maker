@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createProfile, isSlugAvailable, getProfiles } from "@/lib/storage";
@@ -9,10 +9,13 @@ import { Profile } from "@/lib/types";
 import { Sparkles, Lock, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+let profileCreationLock = false;
+
 export default function NewProfilePage() {
   const router = useRouter();
   const { user, loading: authLoading, isPending, isSuspended, isAdmin, isCustomer, memberAccount } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
+  const creatingRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -28,7 +31,10 @@ export default function NewProfilePage() {
       return;
     }
 
-    // Rekta sa buong profile editor:
+    if (creatingRef.current || profileCreationLock) return;
+    creatingRef.current = true;
+    profileCreationLock = true;
+
     // Generate new draft profile directly and redirect straight to the full two-panel editor
     async function createAndRedirect() {
       try {
@@ -139,15 +145,20 @@ export default function NewProfilePage() {
         };
 
         const saved = await createProfile(newProfile);
+        setTimeout(() => {
+          profileCreationLock = false;
+        }, 1500);
         router.replace(`/editor/${saved.id}`);
       } catch (err: any) {
+        creatingRef.current = false;
+        profileCreationLock = false;
         console.error("Error creating draft profile:", err);
         setInitError(err?.message || "Failed to initialize profile. Please try again.");
       }
     }
 
     createAndRedirect();
-  }, [user, authLoading, router, isPending, isSuspended]);
+  }, [user, authLoading, router, isPending, isSuspended, isCustomer]);
 
   if (authLoading) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createEmptyMenu, createMenu, isMenuSlugAvailable, getMenus } from "@/lib/menuStorage";
@@ -8,10 +8,13 @@ import { getProfiles } from "@/lib/storage";
 import { UtensilsCrossed, Lock, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+let menuCreationLock = false;
+
 export default function NewMenuPage() {
   const router = useRouter();
   const { user, loading: authLoading, isPending, isSuspended, isAdmin, isCustomer, memberAccount } = useAuth();
   const [initError, setInitError] = useState<string | null>(null);
+  const creatingRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -25,6 +28,10 @@ export default function NewMenuPage() {
       router.push("/dashboard");
       return;
     }
+
+    if (creatingRef.current || menuCreationLock) return;
+    creatingRef.current = true;
+    menuCreationLock = true;
 
     async function initializeMenu() {
       try {
@@ -60,15 +67,20 @@ export default function NewMenuPage() {
         newMenu.tagline = "Fresh Artisanal Brews & Handcrafted Dishes";
 
         const saved = await createMenu(newMenu);
+        setTimeout(() => {
+          menuCreationLock = false;
+        }, 1500);
         router.replace(`/editor/menu/${saved.id}`);
       } catch (err: any) {
+        creatingRef.current = false;
+        menuCreationLock = false;
         console.error("Error creating draft menu:", err);
         setInitError(err?.message || "Failed to initialize menu. Please try again.");
       }
     }
 
     initializeMenu();
-  }, [user, authLoading, router, isPending, isSuspended]);
+  }, [user, authLoading, router, isPending, isSuspended, isCustomer]);
 
   if (authLoading) {
     return (
