@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
+  Film,
   Layers,
+  Play,
   QrCode,
   Smartphone,
   Sparkles,
@@ -15,8 +17,34 @@ import { SiteNavbar } from "@/components/landing/SiteNavbar";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { RotatableNfcCard } from "@/components/landing/RotatableNfcCard";
 
+const VIDEO_CHAPTERS = [
+  { label: "0:00 Intro", time: 0 },
+  { label: "0:17 Dashboard", time: 17 },
+  { label: "0:29 Profile Editor", time: 29 },
+  { label: "0:41 AI Auto-Style", time: 41 },
+  { label: "0:51 Digital Menu", time: 51 },
+  { label: "1:03 AI Scanner", time: 63 },
+];
+
 export default function HowItWorksPage() {
   const [activeTrack, setActiveTrack] = useState<"profile" | "menu">("profile");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleSeekTo = (seconds: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = seconds;
+    v.play().catch(() => {});
+    setIsPlaying(true);
+  };
+
+  const handleOverlayPlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
+    setIsPlaying(true);
+  };
 
   const profileSteps = [
     {
@@ -68,10 +96,10 @@ export default function HowItWorksPage() {
 
       <main className="flex-1">
         {/* Header */}
-        <section className="pt-14 pb-12 px-6 sm:px-12 max-w-7xl mx-auto text-center">
+        <section className="pt-14 pb-10 px-6 sm:px-12 max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-300 text-xs font-bold mb-4">
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Interactive Setup Guide</span>
+            <span>Interactive Setup Guide &amp; Video Walkthrough</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
             How Tap-Maker Works.{" "}
@@ -80,40 +108,113 @@ export default function HowItWorksPage() {
             </span>
           </h1>
           <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto mt-3 leading-relaxed">
-            Switch between the Digital Profile and Digital Menu walkthroughs below to see the exact workflow paired with each physical NFC card.
+            Watch the 90-second product tour below, then explore the step-by-step Digital Profile and Digital Menu workflows paired with each NFC card.
           </p>
+        </section>
 
-          {/* Track Switcher */}
-          <div className="inline-flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 mt-8 shadow-lg">
-            <button
-              type="button"
-              onClick={() => setActiveTrack("profile")}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                activeTrack === "profile"
-                  ? "bg-purple-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>Digital Profile Tutorial</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTrack("menu")}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                activeTrack === "menu"
-                  ? "bg-emerald-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <UtensilsCrossed className="w-4 h-4" />
-              <span>Digital Menu Tutorial</span>
-            </button>
+        {/* Official Remotion Product Walkthrough Video */}
+        <section className="pb-16 px-4 sm:px-12 max-w-5xl mx-auto">
+          <div className="rounded-3xl bg-slate-900/80 border border-purple-500/30 shadow-[0_24px_80px_-20px_rgba(147,51,234,0.35)] overflow-hidden">
+            {/* Cinema Top Bar */}
+            <div className="px-4 sm:px-6 py-3.5 border-b border-slate-800/90 bg-slate-950/70 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <Film className="w-4 h-4 text-purple-400" />
+                <span>Tap-Maker — Official Product Walkthrough</span>
+              </div>
+              <span className="text-[11px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 px-2.5 py-0.5 rounded-full">
+                1:30 · 1080p HD
+              </span>
+            </div>
+
+            {/* Video Container */}
+            <div className="relative w-full aspect-video bg-slate-950">
+              <video
+                ref={videoRef}
+                src="/videos/tapmaker-intro.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                className="w-full h-full object-contain bg-slate-950"
+              />
+
+              {/* Subtle Center Play Button Overlay before playback starts */}
+              {!isPlaying && (
+                <button
+                  type="button"
+                  onClick={handleOverlayPlay}
+                  aria-label="Play product walkthrough video"
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/45 hover:bg-slate-950/30 transition-colors cursor-pointer group"
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 shadow-2xl shadow-purple-600/50 flex items-center justify-center group-hover:scale-105 transition-transform border border-white/20">
+                    <Play className="w-7 h-7 sm:w-8 sm:h-8 text-white fill-white ml-1" />
+                  </div>
+                  <span className="mt-3 px-3.5 py-1 rounded-full bg-slate-950/80 border border-slate-700 text-xs font-bold text-slate-200">
+                    Watch 90-Second Product Tour
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Quick Chapter Jump Bar */}
+            <div className="px-4 sm:px-6 py-3.5 bg-slate-950/60 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex-shrink-0 mr-1">
+                Chapters:
+              </span>
+              {VIDEO_CHAPTERS.map((ch) => (
+                <button
+                  key={ch.label}
+                  type="button"
+                  onClick={() => handleSeekTo(ch.time)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-purple-600/20 border border-slate-800 hover:border-purple-500/40 text-[11px] font-semibold text-slate-300 hover:text-purple-200 transition-colors flex-shrink-0 cursor-pointer"
+                >
+                  {ch.label}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Steps + Matching Moving NFC Card */}
-        <section className="py-10 pb-24 px-6 sm:px-12 max-w-7xl mx-auto">
+        {/* Track Switcher + Steps + Matching Moving NFC Card */}
+        <section className="py-10 pb-24 px-6 sm:px-12 max-w-7xl mx-auto border-t border-slate-800/80">
+          <div className="flex flex-col items-center text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+              Step-by-Step Workflow
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2">
+              Switch between Digital Profiles and Digital Menus to see each setup track.
+            </p>
+
+            {/* Track Switcher */}
+            <div className="inline-flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 mt-6 shadow-lg">
+              <button
+                type="button"
+                onClick={() => setActiveTrack("profile")}
+                className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                  activeTrack === "profile"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Digital Profile Tutorial</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTrack("menu")}
+                className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                  activeTrack === "menu"
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <UtensilsCrossed className="w-4 h-4" />
+                <span>Digital Menu Tutorial</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             {/* Left: 3 Detailed Steps */}
             <div className="lg:col-span-7 space-y-5">
