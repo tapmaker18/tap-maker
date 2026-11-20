@@ -17,7 +17,8 @@ const COLLECTION: Record<AssetType, string> = { profile: "profiles", menu: "menu
 
 const RESERVED: Record<AssetType, string[]> = {
   profile: [
-    "dashboard", "editor", "login", "api", "templates", "settings", "admin", "public",
+    "dashboard", "editor", "login", "api", "templates", "features", "digital-menus",
+    "how-it-works", "contact", "customer", "settings", "admin", "public",
     "favicon", "sitemap", "robots", "terms", "privacy", "pricing", "about", "menu", "new", "_next",
   ],
   menu: ["new", "editor", "admin", "api", "settings"],
