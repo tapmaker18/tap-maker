@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
+import { InteractiveNfcShowcase } from "@/components/landing/InteractiveNfcShowcase";
 
 export default function HomePage() {
   const { user, signOut } = useAuth();
@@ -605,6 +606,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Interactive 3D Rotatable NFC Hardware Showcase */}
+      <InteractiveNfcShowcase />
 
       {/* Template Gallery Section */}
       <section id="templates" className="py-20 px-6 sm:px-12 max-w-7xl mx-auto w-full">
