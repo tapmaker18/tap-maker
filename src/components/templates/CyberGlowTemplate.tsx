@@ -152,14 +152,8 @@ export const CyberGlowTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         />
       )}
 
-      {/* Main Responsive Profile Container */}
-      <main
-        className="relative z-10 w-full max-w-[460px] px-5 py-8 rounded-3xl border shadow-2xl backdrop-blur-xl flex flex-col items-center gap-7 animate-fade-slide-up tmaker-card"
-        style={{
-          backgroundColor: themeSettings.cardBg || "rgba(255, 255, 255, 0.04)",
-          borderColor: themeSettings.borderColor || "rgba(255, 255, 255, 0.12)",
-        }}
-      >
+      {/* Main Full-Viewport Responsive Profile Content (No Outer Card Box) */}
+      <main className="relative z-10 w-full max-w-[480px] flex-1 px-5 py-10 flex flex-col items-center gap-7 animate-fade-slide-up">
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span

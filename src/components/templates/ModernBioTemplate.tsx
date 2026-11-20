@@ -47,7 +47,7 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
 
   return (
     <div
-      className="relative min-h-screen w-full flex flex-col items-center justify-between p-4 sm:p-8 tmaker-profile-root"
+      className="relative min-h-screen w-full flex flex-col items-center justify-between px-5 py-8 sm:py-10 overflow-x-hidden tmaker-profile-root"
       style={{
         backgroundColor: themeSettings.bgPrimary,
         color: themeSettings.textColor,
@@ -69,13 +69,8 @@ export const ModernBioTemplate: React.FC<TemplateProps> = ({ profile, isPreview 
         />
       )}
 
-      <div
-        className="w-full max-w-md flex flex-col items-center gap-6 my-auto py-7 px-5 sm:px-7 rounded-3xl border shadow-2xl backdrop-blur-xl animate-fade-slide-up relative z-10 tmaker-card"
-        style={{
-          backgroundColor: themeSettings.cardBg || "rgba(255, 255, 255, 0.04)",
-          borderColor: themeSettings.borderColor || "rgba(255, 255, 255, 0.12)",
-        }}
-      >
+      {/* Full-Viewport Content Container (No Outer Card Box) */}
+      <div className="w-full max-w-[480px] flex-1 flex flex-col items-center gap-6 py-4 animate-fade-slide-up relative z-10">
         {/* Floating Custom Badge */}
         {themeSettings.badgeText && (
           <span
