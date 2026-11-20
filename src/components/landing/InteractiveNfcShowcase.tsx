@@ -16,34 +16,34 @@ interface NfcProduct {
 
 const NFC_PRODUCTS: NfcProduct[] = [
   {
-    id: "google-stand",
-    name: "Google Review NFC Stand",
-    badge: "Bestseller · Countertop",
-    tagline: "Freestanding matte-black acrylic display. Customers tap or scan to leave a 5-star Google review in seconds.",
-    image: "/products/nfc-google-stand.png",
-    accent: "from-amber-400 via-orange-500 to-rose-500",
-    glow: "rgba(245, 158, 11, 0.32)",
-    specs: ["Built-in NTAG215 NFC Chip", "High-Contrast Scannable QR", "Scratch-Resistant Acrylic Stand"],
-  },
-  {
-    id: "google-sticker",
-    name: "Google Review Tap Sticker",
-    badge: "Peel & Stick · Compact",
-    tagline: "Ultra-thin waterproof NFC + QR adhesive tag for reception desks, cashier counters, salon mirrors, and tables.",
-    image: "/products/nfc-google-sticker.png",
+    id: "google-review",
+    name: "Google Review NFC Card",
+    badge: "Bestseller · 5-Star Reviews",
+    tagline: "Smart contactless review plate. Customers simply tap their phone to leave a 5-star Google review instantly.",
+    image: "/products/nfc-google-review.png",
     accent: "from-sky-400 via-blue-500 to-indigo-500",
     glow: "rgba(56, 189, 248, 0.34)",
-    specs: ["3M Industrial Adhesive Backing", "Works on Glass, Wood & Metal*", "Zero App Required (iOS & Android)"],
+    specs: ["Built-in NTAG215 NFC Chip", "One-Tap Direct Google Review Link", "Waterproof & Scratch-Resistant Finish"],
   },
   {
-    id: "menu-plaque",
-    name: "Smart Digital Menu Plaque",
+    id: "menu-card",
+    name: "Smart Digital Menu Card",
     badge: "Restaurants & Cafés",
     tagline: "Paired directly with Tap-Maker Menu Studio. Update prices or mark items Sold Out anytime without reprinting.",
-    image: "/products/nfc-menu-plaque.png",
+    image: "/products/nfc-menu-card.png",
     accent: "from-emerald-400 via-teal-500 to-cyan-500",
     glow: "rgba(16, 185, 129, 0.32)",
-    specs: ["Direct Tap-Maker Menu Sync", "Instant Price & Sold-Out Edits", "Durable Glossy Table Plaque"],
+    specs: ["Direct Tap-Maker Menu Sync", "Tap NFC or Scan High-Contrast QR", "Instant Price & Sold-Out Edits"],
+  },
+  {
+    id: "social-review",
+    name: "Review & Follow Social Card",
+    badge: "All-in-One Social Hub",
+    tagline: "Grow your followers and reviews together. Links straight to your branded Tap-Maker social hub via NFC or QR.",
+    image: "/products/nfc-social-review.png",
+    accent: "from-purple-400 via-indigo-500 to-cyan-400",
+    glow: "rgba(147, 51, 234, 0.34)",
+    specs: ["Connects All Socials & Reviews", "Dual NFC Tap + Scannable QR", "Zero App Required (iOS & Android)"],
   },
 ];
 
@@ -200,9 +200,9 @@ export const InteractiveNfcShowcase: React.FC = () => {
               </div>
             </div>
 
-            {/* 3D Rotatable Product Container */}
+            {/* 3D Rotatable Product Container (Square Card Aspect) */}
             <div
-              className="relative w-[270px] sm:w-[320px] h-[320px] sm:h-[360px] flex items-center justify-center transition-transform duration-75"
+              className="relative w-[290px] sm:w-[330px] h-[290px] sm:h-[330px] flex items-center justify-center transition-transform duration-75"
               style={{
                 transformStyle: "preserve-3d",
                 transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
@@ -221,11 +221,11 @@ export const InteractiveNfcShowcase: React.FC = () => {
                   src={activeProduct.image}
                   alt={activeProduct.name}
                   draggable={false}
-                  className="max-w-full max-h-full object-contain drop-shadow-[0_26px_42px_rgba(0,0,0,0.75)] pointer-events-none"
+                  className="w-full h-full object-contain drop-shadow-[0_26px_42px_rgba(0,0,0,0.75)] pointer-events-none"
                 />
                 {/* Subtle Moving Gloss Reflection */}
                 <div
-                  className="absolute inset-4 rounded-3xl pointer-events-none mix-blend-overlay opacity-40"
+                  className="absolute inset-0 rounded-[36px] pointer-events-none mix-blend-overlay opacity-40"
                   style={{
                     background: `linear-gradient(115deg, transparent ${35 + sheenOffset}%, rgba(255,255,255,0.65) ${
                       50 + sheenOffset
@@ -234,9 +234,9 @@ export const InteractiveNfcShowcase: React.FC = () => {
                 />
               </div>
 
-              {/* BACK FACE (Branded Tap-Maker Smart NFC Backplate when spun 180°) */}
+              {/* BACK FACE (Branded Tap-Maker Smart NFC Backplate matching exact squircle shape) */}
               <div
-                className="absolute inset-4 rounded-3xl bg-gradient-to-br from-slate-900 via-[#0d0920] to-slate-950 border border-purple-500/40 shadow-2xl flex flex-col items-center justify-center gap-4 p-6 text-center"
+                className="absolute inset-0 rounded-[36px] bg-gradient-to-br from-slate-900 via-[#0d0920] to-slate-950 border border-purple-500/40 shadow-2xl flex flex-col items-center justify-center gap-4 p-6 text-center"
                 style={{
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
