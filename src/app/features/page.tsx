@@ -82,7 +82,7 @@ export default function FeaturesPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative pt-14 pb-16 px-6 sm:px-12 max-w-7xl mx-auto">
+        <section className="relative overflow-hidden pt-14 pb-16 px-6 sm:px-12 max-w-7xl mx-auto">
           <div className="absolute top-10 left-1/3 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
             <div className="lg:col-span-7 text-left">

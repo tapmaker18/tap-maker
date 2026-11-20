@@ -143,9 +143,9 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
   };
 
   const landscapeDims = {
-    sm: "w-[270px] h-[150px] sm:w-[310px] sm:h-[172px]",
-    md: "w-[300px] h-[167px] sm:w-[360px] sm:h-[200px]",
-    lg: "w-[320px] h-[178px] sm:w-[410px] sm:h-[228px]",
+    sm: "w-[240px] h-[133px] sm:w-[310px] sm:h-[172px]",
+    md: "w-[260px] h-[144px] sm:w-[360px] sm:h-[200px]",
+    lg: "w-[270px] h-[150px] sm:w-[410px] sm:h-[228px]",
   };
 
   const cardCornerClass = isLandscape ? "rounded-[18px] sm:rounded-[20px]" : "rounded-[34px]";

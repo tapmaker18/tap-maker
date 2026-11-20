@@ -78,13 +78,13 @@ export default function HomePage() {
   const activeSteps = tutorialTrack === "profile" ? profileSteps : menuSteps;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-purple-600 selection:text-white">
+    <div className="min-h-screen w-full overflow-x-clip bg-slate-950 text-slate-100 flex flex-col selection:bg-purple-600 selection:text-white">
       <SiteNavbar />
 
       {/* =====================================================================
           HERO: UNIFIED DIGITAL PROFILES + DIGITAL MENUS MARKETING
       ====================================================================== */}
-      <header className="relative pt-10 sm:pt-16 pb-20 sm:pb-28 px-4 sm:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16 w-full">
+      <header className="relative overflow-hidden pt-10 sm:pt-16 pb-20 sm:pb-28 px-4 sm:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-16 w-full">
         {/* Ambient Glow Orbs */}
         <div className="absolute top-10 left-1/4 w-96 h-96 bg-purple-600/15 rounded-full filter blur-[110px] pointer-events-none" />
         <div className="absolute top-24 right-1/4 w-80 h-80 bg-emerald-500/12 rounded-full filter blur-[110px] pointer-events-none" />
@@ -203,7 +203,7 @@ export default function HomePage() {
           </div>
 
           {/* Phone Frame */}
-          <div className="relative w-[330px] h-[590px] rounded-[44px] border-[8px] border-slate-900 bg-slate-950 shadow-[0_30px_90px_-20px_rgba(168,85,247,0.35)] overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-[330px] h-[590px] rounded-[44px] border-[8px] border-slate-900 bg-slate-950 shadow-[0_30px_90px_-20px_rgba(168,85,247,0.35)] overflow-hidden flex flex-col">
             <div className="h-6 w-full bg-slate-950 flex items-center justify-center flex-shrink-0">
               <div className="w-20 h-4 bg-slate-900 rounded-full" />
             </div>

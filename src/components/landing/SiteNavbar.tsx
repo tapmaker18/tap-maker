@@ -31,16 +31,16 @@ export const SiteNavbar: React.FC = () => {
 
   return (
     <>
-      <nav className="h-20 px-4 sm:px-12 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md flex items-center justify-between sticky top-0 z-40">
-        <Link href="/" className="flex items-center gap-3">
+      <nav className="h-20 w-full max-w-full px-4 sm:px-12 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md flex items-center justify-between gap-2 sticky top-0 z-40 overflow-x-clip">
+        <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img
             src="/logo.svg"
             alt="Tap-Maker"
-            className="w-10 h-10 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-lg shadow-purple-600/30 border border-purple-500/20 object-cover flex-shrink-0"
           />
-          <div>
-            <span className="font-extrabold text-base sm:text-lg tracking-tight text-white block">Tap-Maker</span>
-            <span className="text-[10px] uppercase font-bold text-purple-400 tracking-wider block -mt-1">
+          <div className="min-w-0">
+            <span className="font-extrabold text-base sm:text-lg tracking-tight text-white block truncate">Tap-Maker</span>
+            <span className="text-[10px] uppercase font-bold text-purple-400 tracking-wider block -mt-1 truncate">
               Digital Profiles &amp; Menus
             </span>
           </div>
@@ -149,8 +149,8 @@ export const SiteNavbar: React.FC = () => {
 
       {/* Mobile Dropdown Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 top-20 z-40 md:hidden flex flex-col justify-between bg-slate-950/95 backdrop-blur-xl border-b border-slate-800">
-          <div className="px-6 py-6 flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <div className="fixed inset-x-0 top-20 bottom-0 w-full max-w-[100vw] overflow-x-hidden z-40 md:hidden flex flex-col justify-between bg-slate-950/95 backdrop-blur-xl border-b border-slate-800">
+          <div className="px-4 sm:px-6 py-6 flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-5rem)] w-full">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 pb-1">
               Pages
             </p>
