@@ -46,7 +46,7 @@ export default function ContactPage() {
             </h1>
 
             <p className="text-sm text-slate-400 mt-4 leading-relaxed max-w-md">
-              Want to order custom Google Review cards, Smart Digital Menu table cards, or Social Hub NFC cards? Send us a message or connect on social media.
+              Want to order custom Digital Business Cards, Smart Digital Menu table cards, or Social Hub NFC cards? Send us a message or connect on social media.
             </p>
 
             {/* Social Links */}
@@ -195,7 +195,7 @@ export default function ContactPage() {
               </p>
             </form>
 
-            <RotatableNfcCard cardIds={["google-review", "menu-card", "social-review"]} size="sm" spinSpeed={22} />
+            <RotatableNfcCard cardIds={["business-card", "menu-card", "social-review"]} size="sm" spinSpeed={22} />
           </div>
         </div>
       </main>

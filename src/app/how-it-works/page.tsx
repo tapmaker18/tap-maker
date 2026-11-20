@@ -155,7 +155,7 @@ export default function HowItWorksPage() {
             <div className="lg:col-span-5 lg:sticky lg:top-28 flex flex-col gap-5">
               <RotatableNfcCard
                 key={activeTrack}
-                cardIds={activeTrack === "profile" ? ["social-review", "google-review"] : ["menu-card"]}
+                cardIds={activeTrack === "profile" ? ["business-card", "social-review"] : ["menu-card"]}
                 size="md"
                 spinSpeed={24}
               />

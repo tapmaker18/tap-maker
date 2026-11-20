@@ -118,7 +118,7 @@ export default function FeaturesPage() {
             </div>
 
             <div className="lg:col-span-5">
-              <RotatableNfcCard cardIds={["social-review", "google-review", "menu-card"]} size="md" spinSpeed={22} />
+              <RotatableNfcCard cardIds={["business-card", "menu-card", "social-review"]} size="md" spinSpeed={22} />
             </div>
           </div>
         </section>

@@ -128,7 +128,7 @@ export default function TemplatesPage() {
               </div>
             </div>
 
-            <RotatableNfcCard cardIds={["social-review", "google-review"]} size="md" spinSpeed={24} />
+            <RotatableNfcCard cardIds={["business-card", "social-review"]} size="md" spinSpeed={24} />
           </div>
         </div>
       </main>

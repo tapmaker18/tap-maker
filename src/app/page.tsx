@@ -45,7 +45,7 @@ export default function HomePage() {
     {
       num: "03",
       title: "Tap NFC Card & Connect",
-      desc: "Pair with your Tap-Maker NFC card. One tap opens your full digital profile, social links, Google reviews, and 1-click vCard contact save.",
+      desc: "Pair with your Tap-Maker Digital Business Card. One tap opens your full digital profile, social links, and 1-click vCard contact save.",
       tag: "iPhone & Android ready",
       color: "emerald",
     },
@@ -116,9 +116,9 @@ export default function HomePage() {
                 <Smartphone className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xs font-extrabold text-white">Digital Profiles &amp; Reviews</h3>
+                <h3 className="text-xs font-extrabold text-white">Digital Profiles &amp; Business Cards</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                  Social hubs, 1-click vCard save, AI Auto-Style &amp; Google review cards.
+                  Social hubs, 1-click vCard save, AI Auto-Style &amp; smart NFC business cards.
                 </p>
               </div>
             </div>
@@ -323,8 +323,8 @@ export default function HomePage() {
 
             <p className="text-sm sm:text-base text-slate-300 mt-4 leading-relaxed max-w-xl">
               Replace paper business cards with a living digital hub. Pair your profile with our{" "}
-              <strong className="text-white">Review &amp; Follow Social Card</strong> or{" "}
-              <strong className="text-sky-300">Google Review NFC Card</strong> so clients can save your contact, follow your socials, and leave 5-star reviews in seconds.
+              <strong className="text-white">Digital Business Card</strong> or{" "}
+              <strong className="text-purple-300">Review &amp; Follow Social Card</strong> so clients can save your contact and connect across all your socials in seconds.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-7 w-full">
@@ -381,9 +381,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: Moving & 360° Draggable Profile / Review NFC Cards */}
+          {/* Right: Moving & 360° Draggable Digital Business Card & Social Hub Card */}
           <div className="lg:col-span-6 flex flex-col items-center">
-            <RotatableNfcCard cardIds={["social-review", "google-review"]} size="lg" spinSpeed={24} />
+            <RotatableNfcCard cardIds={["business-card", "social-review"]} size="lg" spinSpeed={24} />
           </div>
         </div>
       </section>

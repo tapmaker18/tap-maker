@@ -4,39 +4,42 @@ import React, { useState, useRef, useEffect } from "react";
 import { RotateCw, Move3d, Radio, RotateCcw } from "lucide-react";
 
 export interface NfcCardAsset {
-  id: "google-review" | "menu-card" | "social-review";
+  id: "business-card" | "menu-card" | "social-review";
   name: string;
   shortLabel: string;
   badge: string;
   tagline: string;
   image: string;
+  aspect: "landscape" | "square";
   accent: string;
   glow: string;
   specs: string[];
 }
 
 export const NFC_CARDS: Record<NfcCardAsset["id"], NfcCardAsset> = {
+  "business-card": {
+    id: "business-card",
+    name: "Digital Business Card",
+    shortLabel: "Business Card",
+    badge: "Digital Profile · Executive",
+    tagline: "Matte black smart NFC business card. Tap or scan to launch your live Tap-Maker Digital Profile and 1-click vCard.",
+    image: "/products/nfc-business-card.png",
+    aspect: "landscape",
+    accent: "from-sky-400 via-blue-500 to-purple-500",
+    glow: "rgba(56, 189, 248, 0.30)",
+    specs: ["Built-in NTAG215 NFC Chip", "Dual NFC Tap + High-Contrast QR", "1-Click vCard & Social Links"],
+  },
   "social-review": {
     id: "social-review",
     name: "Review & Follow Social Card",
     shortLabel: "Social Hub Card",
     badge: "Digital Profile · All-in-One",
-    tagline: "Tap or scan to launch your branded Tap-Maker Digital Profile, social links, vCard, and reviews.",
+    tagline: "Tap or scan to launch your branded Tap-Maker social hub, links, and follow buttons.",
     image: "/products/nfc-social-review.png",
+    aspect: "square",
     accent: "from-purple-400 via-indigo-500 to-cyan-400",
     glow: "rgba(147, 51, 234, 0.34)",
-    specs: ["Connects All Socials & Reviews", "Dual NFC Tap + Scannable QR", "Zero App Required (iOS & Android)"],
-  },
-  "google-review": {
-    id: "google-review",
-    name: "Google Review NFC Card",
-    shortLabel: "Google Review Card",
-    badge: "5-Star Reviews · Bestseller",
-    tagline: "Customers tap their phone or scan the QR to leave a 5-star Google review in one second.",
-    image: "/products/nfc-google-review.png",
-    accent: "from-sky-400 via-blue-500 to-indigo-500",
-    glow: "rgba(56, 189, 248, 0.34)",
-    specs: ["Built-in NTAG215 NFC Chip", "One-Tap Direct Google Review Link", "Waterproof & Scratch-Resistant"],
+    specs: ["Connects All Socials & Links", "Dual NFC Tap + Scannable QR", "Zero App Required (iOS & Android)"],
   },
   "menu-card": {
     id: "menu-card",
@@ -45,6 +48,7 @@ export const NFC_CARDS: Record<NfcCardAsset["id"], NfcCardAsset> = {
     badge: "Restaurants & Cafés",
     tagline: "Paired directly with Tap-Maker Menu Studio. Update prices or toggle Sold Out anytime with zero reprinting.",
     image: "/products/nfc-menu-card.png",
+    aspect: "square",
     accent: "from-emerald-400 via-teal-500 to-cyan-500",
     glow: "rgba(16, 185, 129, 0.32)",
     specs: ["Direct Tap-Maker Menu Sync", "Tap NFC or Scan High-Contrast QR", "Instant Price & Sold-Out Edits"],
@@ -74,6 +78,7 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
 
   const dragStartRef = useRef<{ x: number; y: number; startRotY: number; startRotX: number } | null>(null);
   const activeCard = NFC_CARDS[cardIds[selectedIdx] ?? cardIds[0]];
+  const isLandscape = activeCard.aspect === "landscape";
 
   useEffect(() => {
     if (!autoSpin || isDragging) return;
@@ -131,11 +136,19 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
     lg: "h-[410px] sm:h-[460px]",
   };
 
-  const cardDims = {
+  const squareDims = {
     sm: "w-[205px] h-[205px] sm:w-[225px] sm:h-[225px]",
     md: "w-[250px] h-[250px] sm:w-[285px] sm:h-[285px]",
     lg: "w-[285px] h-[285px] sm:w-[325px] sm:h-[325px]",
   };
+
+  const landscapeDims = {
+    sm: "w-[270px] h-[150px] sm:w-[310px] sm:h-[172px]",
+    md: "w-[300px] h-[167px] sm:w-[360px] sm:h-[200px]",
+    lg: "w-[320px] h-[178px] sm:w-[410px] sm:h-[228px]",
+  };
+
+  const cardCornerClass = isLandscape ? "rounded-[18px] sm:rounded-[20px]" : "rounded-[34px]";
 
   return (
     <div className={`w-full flex flex-col gap-3 ${className}`}>
@@ -205,7 +218,7 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
 
         {/* 3D Rotatable Card */}
         <div
-          className={`relative ${cardDims[size]} flex items-center justify-center transition-transform duration-75`}
+          className={`relative ${isLandscape ? landscapeDims[size] : squareDims[size]} flex items-center justify-center transition-transform duration-75`}
           style={{
             transformStyle: "preserve-3d",
             transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
@@ -217,7 +230,7 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
-              transform: "translateZ(6px)",
+              transform: "translateZ(5px)",
             }}
           >
             <img
@@ -227,7 +240,7 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
               className="w-full h-full object-contain drop-shadow-[0_24px_38px_rgba(0,0,0,0.75)] pointer-events-none"
             />
             <div
-              className="absolute inset-0 rounded-[34px] pointer-events-none mix-blend-overlay opacity-40"
+              className={`absolute inset-0 ${cardCornerClass} pointer-events-none mix-blend-overlay opacity-40`}
               style={{
                 background: `linear-gradient(115deg, transparent ${35 + sheenOffset}%, rgba(255,255,255,0.65) ${
                   50 + sheenOffset
@@ -238,29 +251,39 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
 
           {/* Back Face */}
           <div
-            className="absolute inset-0 rounded-[34px] bg-gradient-to-br from-slate-900 via-[#0d0920] to-slate-950 border border-purple-500/40 shadow-2xl flex flex-col items-center justify-center gap-3 p-5 text-center"
+            className={`absolute inset-0 ${cardCornerClass} bg-gradient-to-br from-slate-900 via-[#0d0920] to-slate-950 border border-purple-500/40 shadow-2xl flex ${
+              isLandscape ? "flex-row items-center justify-between px-6 py-4 text-left gap-4" : "flex-col items-center justify-center gap-3 p-5 text-center"
+            }`}
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
-              transform: "rotateY(180deg) translateZ(6px)",
+              transform: "rotateY(180deg) translateZ(5px)",
             }}
           >
-            <div className="w-12 h-12 rounded-2xl bg-purple-600/15 border border-purple-500/30 flex items-center justify-center shadow-lg">
-              <img src="/logo.svg" alt="Tap-Maker" className="w-9 h-9 rounded-xl" />
+            <div className={`${isLandscape ? "w-14 h-14" : "w-12 h-12"} rounded-2xl bg-purple-600/15 border border-purple-500/30 flex items-center justify-center shadow-lg flex-shrink-0`}>
+              <img src="/logo.svg" alt="Tap-Maker" className={`${isLandscape ? "w-10 h-10" : "w-9 h-9"} rounded-xl`} />
             </div>
-            <div>
+            <div className={isLandscape ? "flex-1 min-w-0" : ""}>
               <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-400 font-bold">
                 Tap-Maker Smart NFC
               </p>
-              <h4 className="text-sm font-extrabold text-white mt-1">{activeCard.name}</h4>
+              <h4 className="text-sm font-extrabold text-white mt-0.5 truncate">{activeCard.name}</h4>
               <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
                 Embedded NTAG215 chip. Reprogrammable anytime via Tap-Maker Studio.
               </p>
+              {isLandscape && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 mt-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
+                  <Radio className="w-3 h-3 animate-pulse" />
+                  <span>NFC + QR Verified</span>
+                </div>
+              )}
             </div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
-              <Radio className="w-3 h-3 animate-pulse" />
-              <span>NFC + QR Verified</span>
-            </div>
+            {!isLandscape && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
+                <Radio className="w-3 h-3 animate-pulse" />
+                <span>NFC + QR Verified</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -297,7 +320,7 @@ export const RotatableNfcCard: React.FC<RotatableNfcCardProps> = ({
                     : "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
                 }`}
               >
-                <img src={card.image} alt={card.shortLabel} className="w-4 h-4 object-contain" />
+                <img src={card.image} alt={card.shortLabel} className="w-5 h-4 object-contain" />
                 <span>{card.shortLabel}</span>
               </button>
             );
