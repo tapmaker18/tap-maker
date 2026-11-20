@@ -21,16 +21,64 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+function sanitizeRedirectPath(raw: string | null): string {
+  if (!raw || typeof raw !== "string") return "/dashboard";
+  const trimmed = raw.trim();
+  // Prevent open-redirect attacks (e.g. //evil.com or https://evil.com)
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.includes("\\")) {
+    return "/dashboard";
+  }
+  return trimmed;
+}
+
+async function callAuthGuard(payload: {
+  action: "check" | "fail" | "success" | "signup" | "reset";
+  email?: string;
+  honeypot?: string;
+}): Promise<{
+  allowed: boolean;
+  remainingAttempts?: number;
+  retryAfterSeconds?: number;
+  error?: string;
+}> {
+  try {
+    const res = await fetch("/api/auth/guard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.allowed === false) {
+      return {
+        allowed: false,
+        remainingAttempts: data.remainingAttempts,
+        retryAfterSeconds: data.retryAfterSeconds || 60,
+        error: data.error || "Too many attempts. Please wait before trying again.",
+      };
+    }
+    return {
+      allowed: true,
+      remainingAttempts: data.remainingAttempts,
+      retryAfterSeconds: 0,
+    };
+  } catch {
+    // Fail open only if network request itself couldn't reach local route
+    return { allowed: true };
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/dashboard";
+  const redirectUrl = sanitizeRedirectPath(searchParams.get("redirect"));
 
   const { user, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // Anti-bot honeypot field (must remain empty)
+  const [honeypot, setHoneypot] = useState("");
 
   // Customer onboarding metadata fields (captured during Sign Up)
   const [businessName, setBusinessName] = useState("");
@@ -41,6 +89,16 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Countdown timer when rate-limited / locked out
+  React.useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -51,6 +109,11 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockoutSeconds > 0) {
+      setError(`Too many attempts. Please wait ${lockoutSeconds}s before trying again.`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
@@ -74,9 +137,24 @@ function LoginForm() {
       return;
     }
 
+    // Server-side brute-force & bot rate-limit check
+    const guardCheck = await callAuthGuard({
+      action: mode === "signin" ? "check" : "signup",
+      email: email.trim(),
+      honeypot,
+    });
+    if (!guardCheck.allowed) {
+      const wait = guardCheck.retryAfterSeconds || 60;
+      setLockoutSeconds(wait);
+      setError(guardCheck.error || `Too many attempts. Please wait ${wait}s.`);
+      setLoading(false);
+      return;
+    }
+
     try {
       if (mode === "signin") {
         await signIn(email.trim(), password);
+        await callAuthGuard({ action: "success", email: email.trim() });
         setSuccessMsg("Signed in successfully! Redirecting...");
       } else {
         await signUp(email.trim(), password, {
@@ -92,14 +170,40 @@ function LoginForm() {
     } catch (err: any) {
       console.error("Auth error:", err);
       let message = "Authentication failed. Please check your credentials.";
-      if (err.code === "auth/email-already-in-use") {
+      if (err.code === "auth/too-many-requests") {
+        setLockoutSeconds(60);
+        message = "Too many failed login attempts. Account temporarily locked for 60s.";
+      } else if (err.code === "auth/email-already-in-use") {
         message = "This email is already registered. Please sign in instead.";
       } else if (
         err.code === "auth/invalid-credential" ||
         err.code === "auth/wrong-password" ||
         err.code === "auth/user-not-found"
       ) {
-        message = "Incorrect email or password. Please try again or click 'Forgot password?'.";
+        if (mode === "signin") {
+          const failReport = await callAuthGuard({
+            action: "fail",
+            email: email.trim(),
+          });
+          if (!failReport.allowed) {
+            const wait = failReport.retryAfterSeconds || 60;
+            setLockoutSeconds(wait);
+            message =
+              failReport.error ||
+              `Too many failed login attempts. Locked for ${wait}s.`;
+          } else if (
+            typeof failReport.remainingAttempts === "number" &&
+            failReport.remainingAttempts <= 2
+          ) {
+            message = `Incorrect email or password (${failReport.remainingAttempts} attempt${
+              failReport.remainingAttempts === 1 ? "" : "s"
+            } left before temporary lockout).`;
+          } else {
+            message = "Incorrect email or password. Please try again or click 'Forgot password?'.";
+          }
+        } else {
+          message = "Incorrect email or password. Please try again.";
+        }
       } else if (err.code === "auth/invalid-email") {
         message = "Please enter a valid email address.";
       } else if (err.code === "auth/weak-password") {
@@ -113,6 +217,10 @@ function LoginForm() {
   };
 
   const handleForgotPassword = async () => {
+    if (lockoutSeconds > 0) {
+      setError(`Please wait ${lockoutSeconds}s before trying again.`);
+      return;
+    }
     if (!email.trim()) {
       setError("Please type your email address above first, then click 'Forgot password?'.");
       return;
@@ -120,6 +228,20 @@ function LoginForm() {
     setResetLoading(true);
     setError(null);
     setSuccessMsg(null);
+
+    const resetGuard = await callAuthGuard({
+      action: "reset",
+      email: email.trim(),
+      honeypot,
+    });
+    if (!resetGuard.allowed) {
+      const wait = resetGuard.retryAfterSeconds || 60;
+      setLockoutSeconds(wait);
+      setError(resetGuard.error || `Too many password reset requests. Wait ${wait}s.`);
+      setResetLoading(false);
+      return;
+    }
+
     try {
       if (!auth) throw new Error("Firebase Auth is not initialized");
       await sendPasswordResetEmail(auth, email.trim());
@@ -183,6 +305,20 @@ function LoginForm() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Anti-bot Honeypot Field (hidden from humans) */}
+          <div className="hidden" aria-hidden="true">
+            <label>
+              Company Website
+              <input
+                type="text"
+                name="company_website_hp"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </label>
+          </div>
           {/* Sign Up Specific Fields */}
           {mode === "signup" && (
             <>
@@ -317,10 +453,16 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+            disabled={loading || lockoutSeconds > 0}
+            className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <span>{loading ? "Signing in..." : "Sign In to Studio"}</span>
+            <span>
+              {lockoutSeconds > 0
+                ? `Locked (${lockoutSeconds}s)`
+                : loading
+                ? "Signing in..."
+                : "Sign In to Studio"}
+            </span>
           </button>
         </form>
 
